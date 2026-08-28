@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 export default function Home() {
   const categories = [
     {
-      title: "Popular PDF Tools",
+      title: "PDF Tools",
       color: "blue",
       tools: [
         { id: "pdf-to-jpg", title: "PDF to JPG", desc: "Extract images locally", icon: "fa-image", route: "/pdf-to-jpg" },
@@ -16,13 +16,22 @@ export default function Home() {
       ]
     },
     {
+      title: "Image Tools",
+      color: "amber",
+      tools: [
+        { id: "image-to-pdf", title: "Image to PDF", desc: "Convert JPG/PNG to PDF", icon: "fa-file-image", route: "/image-to-pdf" },
+        { id: "image-compressor", title: "Image Compressor", desc: "Compress to any KB size", icon: "fa-compress", route: "/image-compressor" },
+        { id: "passport-photo", title: "Passport Photo Maker", desc: "Crop to 3.5x4.5cm", icon: "fa-camera", route: "/passport-maker" },
+        { id: "age-calculator", title: "Age Calculator", desc: "Check exam eligibility", icon: "fa-calculator", route: "/age-calculator" },
+      ]
+    },
+    {
       title: "Govt Exams & Forms 🇮🇳",
       color: "emerald",
       tools: [
         { id: "ssc-photo", title: "SSC Photo Resizer", desc: "Resize to 20-50KB exactly", icon: "fa-id-badge", route: "/ssc-photo-compressor" },
         { id: "ibps-sign", title: "IBPS Signature", desc: "Crop to 140x60 pixels", icon: "fa-signature", route: "/ssc-photo-compressor" },
         { id: "thumb-impression", title: "Thumb Impression", desc: "Optimize ink scans", icon: "fa-fingerprint", route: "/thumb-impression" },
-        { id: "passport-photo", title: "Passport Photo Maker", desc: "Crop to 3.5x4.5cm", icon: "fa-camera", route: "/passport-maker" },
       ]
     },
     {
@@ -39,6 +48,7 @@ export default function Home() {
   const getColorClasses = (color) => {
     const maps = {
       blue: "from-blue-50/50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/20 text-blue-600 dark:text-blue-400 border-blue-200/50 dark:border-blue-800/50 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-[0_8px_20px_rgba(37,99,235,0.15)] dark:hover:shadow-[0_8px_20px_rgba(37,99,235,0.05)]",
+      amber: "from-amber-50/50 to-amber-100/50 dark:from-amber-900/20 dark:to-amber-800/20 text-amber-600 dark:text-amber-400 border-amber-200/50 dark:border-amber-800/50 hover:border-amber-400 dark:hover:border-amber-500 hover:shadow-[0_8px_20px_rgba(245,158,11,0.15)] dark:hover:shadow-[0_8px_20px_rgba(245,158,11,0.05)]",
       emerald: "from-emerald-50/50 to-emerald-100/50 dark:from-emerald-900/20 dark:to-emerald-800/20 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/50 hover:border-emerald-400 dark:hover:border-emerald-500 hover:shadow-[0_8px_20px_rgba(16,185,129,0.15)] dark:hover:shadow-[0_8px_20px_rgba(16,185,129,0.05)]",
       indigo: "from-indigo-50/50 to-indigo-100/50 dark:from-indigo-900/20 dark:to-indigo-800/20 text-indigo-600 dark:text-indigo-400 border-indigo-200/50 dark:border-indigo-800/50 hover:border-indigo-400 dark:hover:border-indigo-500 hover:shadow-[0_8px_20px_rgba(79,70,229,0.15)] dark:hover:shadow-[0_8px_20px_rgba(79,70,229,0.05)]",
     };
@@ -48,6 +58,7 @@ export default function Home() {
   const getIconBg = (color) => {
     const maps = {
       blue: "bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400",
+      amber: "bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400",
       emerald: "bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400",
       indigo: "bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400",
     };

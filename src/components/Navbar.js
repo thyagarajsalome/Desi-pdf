@@ -56,7 +56,9 @@ export default function Navbar() {
           <nav className="hidden md:flex space-x-8">
             <Link href="/" className="text-sm font-semibold text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition">Tools Hub</Link>
             <Link href="/pdf-to-jpg" className="text-sm font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition">PDF to JPG</Link>
-            <Link href="/compress" className="text-sm font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition">Compress</Link>
+            <Link href="/image-to-pdf" className="text-sm font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition">Image to PDF</Link>
+            <Link href="/image-compressor" className="text-sm font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition">Compress Image</Link>
+            <Link href="/compress" className="text-sm font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition">Compress PDF</Link>
             <Link href="/merge" className="text-sm font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition">Merge</Link>
           </nav>
 
@@ -129,8 +131,11 @@ export default function Navbar() {
         <div className="md:hidden border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-[#09090b] px-4 py-6 space-y-4 shadow-lg absolute w-full left-0">
           <Link onClick={() => setMobileMenuOpen(false)} href="/" className="block text-base font-semibold text-gray-900 dark:text-gray-100">Tools Hub</Link>
           <Link onClick={() => setMobileMenuOpen(false)} href="/pdf-to-jpg" className="block text-base font-semibold text-gray-600 dark:text-gray-400">PDF to JPG</Link>
+          <Link onClick={() => setMobileMenuOpen(false)} href="/image-to-pdf" className="block text-base font-semibold text-gray-600 dark:text-gray-400">Image to PDF</Link>
+          <Link onClick={() => setMobileMenuOpen(false)} href="/image-compressor" className="block text-base font-semibold text-gray-600 dark:text-gray-400">Compress Image</Link>
           <Link onClick={() => setMobileMenuOpen(false)} href="/compress" className="block text-base font-semibold text-gray-600 dark:text-gray-400">Compress PDF</Link>
           <Link onClick={() => setMobileMenuOpen(false)} href="/merge" className="block text-base font-semibold text-gray-600 dark:text-gray-400">Merge PDF</Link>
+          <Link onClick={() => setMobileMenuOpen(false)} href="/age-calculator" className="block text-base font-semibold text-gray-600 dark:text-gray-400">Age Calculator</Link>
           
           <div className="pt-4 border-t border-gray-100 dark:border-gray-800 flex flex-col gap-4">
             <Link onClick={() => setMobileMenuOpen(false)} href="/pricing" className="flex justify-center items-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-white text-sm font-bold uppercase tracking-wider">
