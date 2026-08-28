@@ -13,6 +13,8 @@ export default function AdminDashboard() {
   const router = useRouter();
   const [users, setUsers] = useState([]);
   const [seoPages, setSeoPages] = useState([]);
+  const [checkingHealth, setCheckingHealth] = useState(false);
+  const [healthStatus, setHealthStatus] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
 
@@ -39,6 +41,30 @@ export default function AdminDashboard() {
     } catch (err) {
       console.error("Error fetching SEO pages:", err);
     }
+  };
+
+  const checkLinksHealth = async () => {
+    setCheckingHealth(true);
+    const statuses = {};
+    
+    // Process in batches of 50 to avoid overwhelming the browser/server when scaling to 2000+ links
+    const batchSize = 50;
+    for (let i = 0; i < seoPages.length; i += batchSize) {
+      const batch = seoPages.slice(i, i + batchSize);
+      await Promise.all(
+        batch.map(async (page) => {
+          try {
+            const res = await fetch(`/tool/${page.slug}`, { method: 'HEAD' });
+            statuses[page.slug] = res.status;
+          } catch (error) {
+            statuses[page.slug] = 500;
+          }
+        })
+      );
+      // Update state progressively as batches complete
+      setHealthStatus((prev) => ({ ...prev, ...statuses }));
+    }
+    setCheckingHealth(false);
   };
 
   const fetchUsers = async () => {
@@ -195,26 +221,57 @@ export default function AdminDashboard() {
       <div className="mt-10 bg-white dark:bg-[#09090b] border border-gray-200 dark:border-gray-800 rounded-2xl shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 flex justify-between items-center">
           <h3 className="font-bold text-gray-900 dark:text-white">Programmatic SEO Pages ({seoPages.length})</h3>
+          <button 
+            onClick={checkLinksHealth}
+            disabled={checkingHealth || seoPages.length === 0}
+            className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-bold rounded-lg transition flex items-center gap-2"
+          >
+            {checkingHealth ? (
+              <><Loader2 className="h-3 w-3 animate-spin" /> Checking...</>
+            ) : (
+              <><i className="fa-solid fa-heart-pulse"></i> Check Health Status</>
+            )}
+          </button>
         </div>
         
-        <div className="p-6">
+        <div className="p-0 max-h-[600px] overflow-y-auto">
           {seoPages.length === 0 ? (
-            <p className="text-gray-500 dark:text-gray-400 text-sm">No SEO pages found in database.</p>
+            <p className="p-6 text-gray-500 dark:text-gray-400 text-sm">No SEO pages found in database.</p>
           ) : (
-            <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {seoPages.map((page) => (
-                <li key={page.slug} className="flex items-center gap-3">
-                  <i className="fa-solid fa-link text-blue-500 text-sm"></i>
-                  <Link 
-                    href={`/tool/${page.slug}`} 
-                    target="_blank"
-                    className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition font-medium text-sm"
-                  >
-                    {page.h1_title} <span className="text-gray-400 dark:text-gray-600 font-normal text-xs ml-1">(/tool/{page.slug})</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <table className="w-full text-left text-sm text-gray-600 dark:text-gray-400">
+              <thead className="bg-gray-50 dark:bg-gray-900 sticky top-0 z-10 shadow-sm">
+                <tr>
+                  <th className="px-6 py-3 font-bold text-gray-700 dark:text-gray-300">Title</th>
+                  <th className="px-6 py-3 font-bold text-gray-700 dark:text-gray-300">URL Path</th>
+                  <th className="px-6 py-3 font-bold text-gray-700 dark:text-gray-300 text-right">Health Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                {seoPages.map((page) => (
+                  <tr key={page.slug} className="hover:bg-gray-50 dark:hover:bg-gray-900/30 transition">
+                    <td className="px-6 py-3 font-medium text-gray-900 dark:text-gray-100 truncate max-w-xs">{page.h1_title}</td>
+                    <td className="px-6 py-3">
+                      <Link href={`/tool/${page.slug}`} target="_blank" className="text-blue-500 hover:text-blue-600 hover:underline">
+                        /tool/{page.slug}
+                      </Link>
+                    </td>
+                    <td className="px-6 py-3 text-right">
+                      {healthStatus[page.slug] ? (
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                          healthStatus[page.slug] === 200
+                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-500"
+                            : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-500"
+                        }`}>
+                          {healthStatus[page.slug] === 200 ? "200 OK" : `Error ${healthStatus[page.slug]}`}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400 text-xs">-</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
         </div>
       </div>
