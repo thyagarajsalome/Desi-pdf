@@ -10,6 +10,9 @@ import PdfCompressor from "@/components/PdfCompressor";
 import PdfConverter from "@/components/PdfConverter";
 import PdfMerger from "@/components/PdfMerger";
 import PdfSplitter from "@/components/PdfSplitter";
+import ImageToPdf from "@/components/ImageToPdf";
+import ImageCompressor from "@/components/ImageCompressor";
+import AgeCalculator from "@/components/AgeCalculator";
 
 // Next.js static generation (SSG) revalidation time (e.g., 24 hours)
 export const revalidate = 86400;
@@ -60,6 +63,9 @@ export default async function PseoToolPage({ params }) {
     "pdf-to-jpg": PdfConverter,
     "pdf-merge": PdfMerger,
     "pdf-split": PdfSplitter,
+    "image-to-pdf": ImageToPdf,
+    "image-compressor": ImageCompressor,
+    "age-calculator": AgeCalculator,
   }[pageData.tool_target];
 
   return (
