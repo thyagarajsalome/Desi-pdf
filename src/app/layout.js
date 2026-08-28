@@ -1,6 +1,7 @@
 import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import { ThemeProvider } from "@/components/ThemeProvider";
 
 const plusJakarta = Plus_Jakarta_Sans({ 
@@ -33,9 +34,10 @@ export default function RootLayout({ children }) {
       <body className="min-h-full flex flex-col font-sans bg-gray-50 dark:bg-[#09090b] text-gray-900 dark:text-gray-100 transition-colors duration-300">
         <ThemeProvider>
           <Navbar />
-          <main className="flex-grow">
+          <main className="flex-grow flex flex-col">
             {children}
           </main>
+          <Footer />
         </ThemeProvider>
       </body>
     </html>

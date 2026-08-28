@@ -162,6 +162,43 @@ export default function Home() {
 
         </div>
       </div>
+
+      {/* SEO FAQ Section */}
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-32">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white mb-4">Frequently Asked Questions</h2>
+          <p className="text-lg text-gray-600 dark:text-gray-400">Everything you need to know about our secure PDF tools.</p>
+        </div>
+        
+        <div className="space-y-6">
+          <div className="bg-white dark:bg-[#09090b] border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+              <i className="fa-solid fa-shield-halved text-blue-500"></i> Is it safe to upload my Aadhaar or PAN card?
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
+              Yes, absolutely. We engineered our tools to process your highly sensitive documents <strong>locally in your web browser</strong>. Your PDF files, Aadhaar passwords, and ID photos are <em>never</em> uploaded to our servers. They stay entirely on your device.
+            </p>
+          </div>
+
+          <div className="bg-white dark:bg-[#09090b] border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+              <i className="fa-solid fa-compress text-emerald-500"></i> How do I compress my photo for SSC and UPSC exams?
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
+              Government exam portals (like SSC, IBPS, and UPSC) have strict rules requiring photos and signatures to be between <strong>20KB to 50KB</strong>. Simply use our <a href="/ssc-photo-compressor" className="text-blue-600 hover:underline">SSC Photo Resizer tool</a>, upload your photo, and we will automatically crop it to 3.5cm x 4.5cm and compress it to the exact required file size.
+            </p>
+          </div>
+
+          <div className="bg-white dark:bg-[#09090b] border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+              <i className="fa-solid fa-unlock-keyhole text-indigo-500"></i> How do I remove the password from my e-Aadhaar?
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
+              When you download your e-Aadhaar from the UIDAI portal, it is locked with a password (usually the first 4 letters of your name in capitals + your birth year). Use our <a href="/aadhaar-unlock" className="text-blue-600 hover:underline">Aadhaar Unlocker</a> to securely enter the password once, and we will generate a permanently unlocked PDF that you can easily print or share with banks.
+            </p>
+          </div>
+        </div>
+      </div>
     </>
   );
 }
