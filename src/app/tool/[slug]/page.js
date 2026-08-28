@@ -14,7 +14,8 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }) {
-  const page = seoPages.find((p) => p.slug === params.slug);
+  const { slug } = await params;
+  const page = seoPages.find((p) => p.slug === slug);
   if (!page) return { title: "Not Found" };
 
   return {
@@ -23,8 +24,9 @@ export async function generateMetadata({ params }) {
   };
 }
 
-export default function PseoToolPage({ params }) {
-  const pageData = seoPages.find((p) => p.slug === params.slug);
+export default async function PseoToolPage({ params }) {
+  const { slug } = await params;
+  const pageData = seoPages.find((p) => p.slug === slug);
   
   if (!pageData) {
     notFound();
