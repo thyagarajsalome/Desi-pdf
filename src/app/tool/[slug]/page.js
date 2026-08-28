@@ -6,6 +6,10 @@ import PanMerger from "@/components/PanMerger";
 import VoterIdPdf from "@/components/VoterIdPdf";
 import ThumbOptimizer from "@/components/ThumbOptimizer";
 import PassportMaker from "@/components/PassportMaker";
+import PdfCompressor from "@/components/PdfCompressor";
+import PdfConverter from "@/components/PdfConverter";
+import PdfMerger from "@/components/PdfMerger";
+import PdfSplitter from "@/components/PdfSplitter";
 
 // Next.js static generation (SSG) revalidation time (e.g., 24 hours)
 export const revalidate = 86400;
@@ -46,12 +50,16 @@ export default async function PseoToolPage({ params }) {
   // Map the tool_target from the database to the actual React component
   const ToolComponent = {
     "ssc-photo": SscPhotoResizer,
-    "ibps-sign": SscPhotoResizer, // Currently using same component for signature
+    "ibps-sign": SscPhotoResizer,
     "aadhaar-unlock": AadhaarUnlocker,
     "pan-merge": PanMerger,
     "voter-id-pdf": VoterIdPdf,
     "thumb-impression": ThumbOptimizer,
     "passport-maker": PassportMaker,
+    "pdf-compress": PdfCompressor,
+    "pdf-to-jpg": PdfConverter,
+    "pdf-merge": PdfMerger,
+    "pdf-split": PdfSplitter,
   }[pageData.tool_target];
 
   return (
