@@ -1,7 +1,9 @@
+import { seoPages } from "@/lib/seoData";
+
 export default function sitemap() {
   const baseUrl = "https://convertpdftojpg.in";
 
-  const routes = [
+  const staticRoutes = [
     "",
     "/pdf-to-jpg",
     "/merge",
@@ -20,10 +22,19 @@ export default function sitemap() {
     "/disclaimer",
   ];
 
-  return routes.map((route) => ({
+  const staticMap = staticRoutes.map((route) => ({
     url: `${baseUrl}${route}`,
     lastModified: new Date(),
     changeFrequency: route === "" ? "daily" : "weekly",
     priority: route === "" ? 1.0 : 0.8,
   }));
+
+  const dynamicMap = seoPages.map((page) => ({
+    url: `${baseUrl}/tool/${page.slug}`,
+    lastModified: new Date(),
+    changeFrequency: "weekly",
+    priority: 0.7,
+  }));
+
+  return [...staticMap, ...dynamicMap];
 }
