@@ -108,8 +108,8 @@ export default function Home() {
       </section>
 
       {/* Categories Dashboard */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-32">
-        <div className="flex flex-col gap-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 sm:pb-32">
+        <div className="flex flex-col gap-10 sm:gap-16">
           
           {categories.map((cat, idx) => (
             <motion.div 
@@ -120,38 +120,38 @@ export default function Home() {
               whileInView="show"
               viewport={{ once: true, margin: "-100px" }}
             >
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3 border-b border-gray-200 dark:border-gray-800 pb-4">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6 flex items-center gap-3 border-b border-gray-200 dark:border-gray-800 pb-3 sm:pb-4">
                 {cat.title}
               </h2>
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mt-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 mt-4 sm:mt-6">
                 {cat.tools.map((tool) => (
-                  <motion.div key={tool.id} variants={itemVariants}>
+                  <motion.div key={tool.id} variants={itemVariants} className="w-full">
                     {tool.comingSoon ? (
-                      <div className={`group block bg-gray-50 dark:bg-[#09090b]/50 border-2 border-gray-200 dark:border-gray-800 rounded-2xl p-6 opacity-70 relative cursor-not-allowed`}>
-                        <div className="absolute top-4 right-4 bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-xs font-bold px-2 py-1 rounded">
+                      <div className={`group block w-full h-full bg-gray-50 dark:bg-[#09090b]/50 border-2 border-gray-200 dark:border-gray-800 rounded-2xl p-4 sm:p-6 opacity-70 relative cursor-not-allowed`}>
+                        <div className="absolute top-3 right-3 sm:top-4 sm:right-4 bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-[10px] sm:text-xs font-bold px-2 py-1 rounded">
                           Coming Soon
                         </div>
-                        <div className="flex items-start justify-between mb-4">
-                          <div className={`h-12 w-12 rounded-xl flex items-center justify-center text-xl bg-gray-200 dark:bg-gray-800 text-gray-400`}>
+                        <div className="flex items-start justify-between mb-3 sm:mb-4">
+                          <div className={`h-10 w-10 sm:h-12 sm:w-12 rounded-xl flex items-center justify-center text-lg sm:text-xl bg-gray-200 dark:bg-gray-800 text-gray-400`}>
                             <i className={`fa-solid ${tool.icon}`}></i>
                           </div>
                         </div>
-                        <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">{tool.title}</h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">{tool.desc}</p>
+                        <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">{tool.title}</h3>
+                        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-medium">{tool.desc}</p>
                       </div>
                     ) : (
-                      <Link href={tool.route} className={`group block bg-white dark:bg-[#09090b] border-2 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 ${getColorClasses(cat.color)}`}>
-                        <div className="flex items-start justify-between mb-4">
-                          <div className={`h-12 w-12 rounded-xl flex items-center justify-center text-xl transition-colors duration-300 ${getIconBg(cat.color)}`}>
+                      <Link href={tool.route} className={`group block w-full h-full bg-white dark:bg-[#09090b] border-2 rounded-2xl p-4 sm:p-6 transition-all duration-300 hover:-translate-y-1 ${getColorClasses(cat.color)}`}>
+                        <div className="flex items-start justify-between mb-3 sm:mb-4">
+                          <div className={`h-10 w-10 sm:h-12 sm:w-12 rounded-xl flex items-center justify-center text-lg sm:text-xl transition-colors duration-300 ${getIconBg(cat.color)}`}>
                             <i className={`fa-solid ${tool.icon}`}></i>
                           </div>
                           <div className="text-gray-300 dark:text-gray-700 group-hover:text-current transition-colors">
-                            <i className="fa-solid fa-arrow-right -rotate-45"></i>
+                            <i className="fa-solid fa-arrow-right -rotate-45 text-sm sm:text-base"></i>
                           </div>
                         </div>
-                        <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1 group-hover:text-current transition-colors">{tool.title}</h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 font-medium group-hover:text-gray-700 dark:group-hover:text-gray-300">{tool.desc}</p>
+                        <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 mb-1 group-hover:text-current transition-colors">{tool.title}</h3>
+                        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-medium group-hover:text-gray-700 dark:group-hover:text-gray-300">{tool.desc}</p>
                       </Link>
                     )}
                   </motion.div>
