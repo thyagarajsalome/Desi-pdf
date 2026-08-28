@@ -37,6 +37,8 @@ export default function Navbar() {
     }
   };
 
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
     <header className="sticky top-0 z-50 bg-white/80 dark:bg-[#09090b]/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 shadow-sm transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -58,7 +60,7 @@ export default function Navbar() {
             <Link href="/merge" className="text-sm font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition">Merge</Link>
           </nav>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             
             <Link href="/pricing" className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-400 to-orange-500 text-white text-xs font-bold uppercase tracking-wider shadow-sm hover:shadow-md transition hover:-translate-y-0.5">
               <Crown className="h-3 w-3" /> Pro
@@ -76,9 +78,9 @@ export default function Navbar() {
             {loading ? (
               <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
             ) : user ? (
-              <div className="flex items-center gap-4">
-                <div className="hidden sm:flex items-center gap-3">
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{user.displayName.split(" ")[0]}</span>
+              <div className="hidden md:flex items-center gap-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{user.displayName?.split(" ")[0]}</span>
                   <img src={user.photoURL || "https://ui-avatars.com/api/?name=User"} alt="Profile" className="h-8 w-8 rounded-full border-2 border-white dark:border-gray-800 shadow-sm" />
                 </div>
                 
@@ -88,7 +90,7 @@ export default function Navbar() {
                     className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 text-sm font-bold transition"
                   >
                     <i className="fa-solid fa-shield-halved"></i>
-                    <span className="hidden sm:inline">Admin</span>
+                    <span>Admin</span>
                   </Link>
                 )}
 
@@ -97,21 +99,67 @@ export default function Navbar() {
                   className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 text-sm font-medium transition"
                 >
                   <LogOut className="h-4 w-4" />
-                  <span className="hidden sm:inline">Logout</span>
+                  <span>Logout</span>
                 </button>
               </div>
             ) : (
-              <Link 
-                href="/login"
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100 text-white dark:text-gray-900 text-sm font-semibold shadow-md transition"
+              <button 
+                onClick={handleLogin}
+                className="hidden md:flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100 text-white dark:text-gray-900 text-sm font-semibold shadow-md transition"
               >
                 <LogIn className="h-4 w-4" />
                 Sign In
-              </Link>
+              </button>
             )}
+
+            {/* Mobile Menu Button */}
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
+            >
+              <i className={`fa-solid ${mobileMenuOpen ? 'fa-xmark' : 'fa-bars'} text-xl`}></i>
+            </button>
+
           </div>
         </div>
       </div>
+
+      {/* Mobile Menu Dropdown */}
+      {mobileMenuOpen && (
+        <div className="md:hidden border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-[#09090b] px-4 py-6 space-y-4 shadow-lg absolute w-full left-0">
+          <Link onClick={() => setMobileMenuOpen(false)} href="/" className="block text-base font-semibold text-gray-900 dark:text-gray-100">Tools Hub</Link>
+          <Link onClick={() => setMobileMenuOpen(false)} href="/pdf-to-jpg" className="block text-base font-semibold text-gray-600 dark:text-gray-400">PDF to JPG</Link>
+          <Link onClick={() => setMobileMenuOpen(false)} href="/compress" className="block text-base font-semibold text-gray-600 dark:text-gray-400">Compress PDF</Link>
+          <Link onClick={() => setMobileMenuOpen(false)} href="/merge" className="block text-base font-semibold text-gray-600 dark:text-gray-400">Merge PDF</Link>
+          
+          <div className="pt-4 border-t border-gray-100 dark:border-gray-800 flex flex-col gap-4">
+            <Link onClick={() => setMobileMenuOpen(false)} href="/pricing" className="flex justify-center items-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-white text-sm font-bold uppercase tracking-wider">
+              <Crown className="h-4 w-4" /> Get Pro
+            </Link>
+            
+            {user ? (
+              <>
+                <div className="flex items-center gap-3 px-2">
+                  <img src={user.photoURL || "https://ui-avatars.com/api/?name=User"} alt="Profile" className="h-10 w-10 rounded-full" />
+                  <span className="font-bold text-gray-900 dark:text-white">{user.displayName}</span>
+                </div>
+                {user.email === "thyagarajsalome@gmail.com" && (
+                  <Link onClick={() => setMobileMenuOpen(false)} href="/admin" className="flex items-center gap-2 px-4 py-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl font-bold justify-center">
+                    <i className="fa-solid fa-shield-halved"></i> Admin Dashboard
+                  </Link>
+                )}
+                <button onClick={() => { handleLogout(); setMobileMenuOpen(false); }} className="flex justify-center items-center gap-2 px-4 py-3 border-2 border-gray-200 dark:border-gray-800 rounded-xl font-bold text-gray-600 dark:text-gray-300">
+                  <LogOut className="h-4 w-4" /> Logout
+                </button>
+              </>
+            ) : (
+              <button onClick={() => { handleLogin(); setMobileMenuOpen(false); }} className="flex justify-center items-center gap-2 px-4 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl font-bold">
+                <LogIn className="h-4 w-4" /> Sign In with Google
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </header>
   );
 }
