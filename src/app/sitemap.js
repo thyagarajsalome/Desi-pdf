@@ -1,6 +1,6 @@
-import { seoPages } from "@/lib/seoData";
+import { supabase } from "@/lib/supabaseClient";
 
-export default function sitemap() {
+export default async function sitemap() {
   const baseUrl = "https://convertpdftojpg.in";
 
   const staticRoutes = [
@@ -29,7 +29,9 @@ export default function sitemap() {
     priority: route === "" ? 1.0 : 0.8,
   }));
 
-  const dynamicMap = seoPages.map((page) => ({
+  const { data: seoPages } = await supabase.from('seo_pages').select('slug');
+
+  const dynamicMap = (seoPages || []).map((page) => ({
     url: `${baseUrl}/tool/${page.slug}`,
     lastModified: new Date(),
     changeFrequency: "weekly",

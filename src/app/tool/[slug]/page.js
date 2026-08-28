@@ -1,4 +1,4 @@
-import { seoPages } from "@/lib/seoData";
+import { supabase } from "@/lib/supabaseClient";
 import { notFound } from "next/navigation";
 import SscPhotoResizer from "@/components/SscPhotoResizer";
 import AadhaarUnlocker from "@/components/AadhaarUnlocker";
@@ -7,15 +7,22 @@ import VoterIdPdf from "@/components/VoterIdPdf";
 import ThumbOptimizer from "@/components/ThumbOptimizer";
 import PassportMaker from "@/components/PassportMaker";
 
+// Next.js static generation (SSG) revalidation time (e.g., 24 hours)
+export const revalidate = 86400;
+
 export async function generateStaticParams() {
-  return seoPages.map((page) => ({
-    slug: page.slug,
-  }));
+  const { data: pages } = await supabase.from('seo_pages').select('slug');
+  return pages?.map((page) => ({ slug: page.slug })) || [];
 }
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
-  const page = seoPages.find((p) => p.slug === slug);
+  const { data: page } = await supabase
+    .from('seo_pages')
+    .select('meta_title, meta_description')
+    .eq('slug', slug)
+    .single();
+
   if (!page) return { title: "Not Found" };
 
   return {
@@ -26,7 +33,11 @@ export async function generateMetadata({ params }) {
 
 export default async function PseoToolPage({ params }) {
   const { slug } = await params;
-  const pageData = seoPages.find((p) => p.slug === slug);
+  const { data: pageData } = await supabase
+    .from('seo_pages')
+    .select('*')
+    .eq('slug', slug)
+    .single();
   
   if (!pageData) {
     notFound();
