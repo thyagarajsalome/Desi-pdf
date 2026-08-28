@@ -6,10 +6,13 @@ import { auth, db } from "@/lib/firebase";
 import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { Loader2 } from "lucide-react";
+import { supabase } from "@/lib/supabaseClient";
+import Link from "next/link";
 
 export default function AdminDashboard() {
   const router = useRouter();
   const [users, setUsers] = useState([]);
+  const [seoPages, setSeoPages] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
 
@@ -19,13 +22,24 @@ export default function AdminDashboard() {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user && user.email === ADMIN_EMAIL) {
         setIsAuthorized(true);
-        await fetchUsers();
+        await Promise.all([fetchUsers(), fetchSeoPages()]);
       } else {
         router.push("/");
       }
     });
     return () => unsubscribe();
   }, [router]);
+
+  const fetchSeoPages = async () => {
+    try {
+      const { data, error } = await supabase.from('seo_pages').select('slug, h1_title').order('created_at', { ascending: false });
+      if (!error && data) {
+        setSeoPages(data);
+      }
+    } catch (err) {
+      console.error("Error fetching SEO pages:", err);
+    }
+  };
 
   const fetchUsers = async () => {
     try {
@@ -174,6 +188,34 @@ export default function AdminDashboard() {
               )}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {/* Programmatic SEO Pages List */}
+      <div className="mt-10 bg-white dark:bg-[#09090b] border border-gray-200 dark:border-gray-800 rounded-2xl shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 flex justify-between items-center">
+          <h3 className="font-bold text-gray-900 dark:text-white">Programmatic SEO Pages ({seoPages.length})</h3>
+        </div>
+        
+        <div className="p-6">
+          {seoPages.length === 0 ? (
+            <p className="text-gray-500 dark:text-gray-400 text-sm">No SEO pages found in database.</p>
+          ) : (
+            <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {seoPages.map((page) => (
+                <li key={page.slug} className="flex items-center gap-3">
+                  <i className="fa-solid fa-link text-blue-500 text-sm"></i>
+                  <Link 
+                    href={`/tool/${page.slug}`} 
+                    target="_blank"
+                    className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition font-medium text-sm"
+                  >
+                    {page.h1_title} <span className="text-gray-400 dark:text-gray-600 font-normal text-xs ml-1">(/tool/{page.slug})</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
     </div>
