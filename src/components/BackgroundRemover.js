@@ -108,12 +108,31 @@ export default function BackgroundRemover() {
 
                 {!originalImage && (
                     <div 
-                        className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-2xl p-12 text-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                        className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-2xl p-12 text-center transition-colors hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/10 cursor-pointer"
                         onClick={() => fileInputRef.current?.click()}
+                        onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('border-purple-500', 'bg-purple-50', 'dark:bg-purple-900/10'); }}
+                        onDragLeave={(e) => { e.preventDefault(); e.currentTarget.classList.remove('border-purple-500', 'bg-purple-50', 'dark:bg-purple-900/10'); }}
+                        onDrop={(e) => {
+                            e.preventDefault();
+                            e.currentTarget.classList.remove('border-purple-500', 'bg-purple-50', 'dark:bg-purple-900/10');
+                            const file = e.dataTransfer.files[0];
+                            if (file && (file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/webp')) {
+                                setSelectedFile(file);
+                                const objectUrl = URL.createObjectURL(file);
+                                setOriginalImage(objectUrl);
+                                setProcessedImage(null);
+                                setError(null);
+                                setProgress(0);
+                            } else {
+                                setError('Please select a valid image file (JPG, PNG, WEBP).');
+                            }
+                        }}
                     >
-                        <i className="fa-solid fa-cloud-arrow-up text-4xl text-gray-400 mb-4"></i>
-                        <p className="text-gray-600 dark:text-gray-300 font-medium">Click to upload an image</p>
-                        <p className="text-gray-400 text-sm mt-2">Supports JPG, PNG, WEBP</p>
+                        <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 text-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i className="fa-solid fa-cloud-arrow-up text-2xl"></i>
+                        </div>
+                        <p className="text-gray-700 dark:text-gray-300 font-bold mb-2 text-xl">Click or drag image here</p>
+                        <p className="text-gray-500 text-sm font-medium mt-2">Supports JPG, PNG, WEBP</p>
                         <input 
                             type="file" 
                             className="hidden" 

@@ -128,7 +128,32 @@ export default function ImageResizer() {
         </h2>
 
         {!originalImage ? (
-          <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-2xl p-12 text-center transition-colors hover:border-amber-500 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+          <div 
+            className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-2xl p-12 text-center transition-colors hover:border-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/10"
+            onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('border-amber-500', 'bg-amber-50', 'dark:bg-amber-900/10'); }}
+            onDragLeave={(e) => { e.preventDefault(); e.currentTarget.classList.remove('border-amber-500', 'bg-amber-50', 'dark:bg-amber-900/10'); }}
+            onDrop={(e) => {
+              e.preventDefault();
+              e.currentTarget.classList.remove('border-amber-500', 'bg-amber-50', 'dark:bg-amber-900/10');
+              const file = e.dataTransfer.files[0];
+              if (file && (file.type === 'image/jpeg' || file.type === 'image/png')) {
+                setFile(file);
+                const objectUrl = URL.createObjectURL(file);
+                setOriginalSize(file.size);
+                
+                const img = new Image();
+                img.onload = () => {
+                  setOriginalDimensions({ width: img.width, height: img.height });
+                  setWidth(img.width);
+                  setHeight(img.height);
+                  setOriginalImage(img);
+                };
+                img.src = objectUrl;
+              } else {
+                alert("Please drop a valid JPG or PNG image.");
+              }
+            }}
+          >
             <input
               type="file"
               accept="image/jpeg, image/png"
@@ -137,9 +162,11 @@ export default function ImageResizer() {
               id="fileUpload"
             />
             <label htmlFor="fileUpload" className="cursor-pointer flex flex-col items-center">
-              <i className="fa-solid fa-cloud-arrow-up text-5xl text-gray-400 mb-4"></i>
-              <span className="text-gray-700 dark:text-gray-300 font-medium mb-2 text-lg">Click to upload image</span>
-              <span className="text-sm text-gray-500">Supports JPG, PNG</span>
+              <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/30 text-amber-600 rounded-full flex items-center justify-center mb-4">
+                <i className="fa-solid fa-cloud-arrow-up text-2xl"></i>
+              </div>
+              <span className="text-gray-700 dark:text-gray-300 font-bold mb-2 text-xl">Click or drag image here</span>
+              <span className="text-sm text-gray-500 font-medium">Supports JPG, PNG</span>
             </label>
           </div>
         ) : (
