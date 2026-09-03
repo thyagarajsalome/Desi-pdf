@@ -1,16 +1,40 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import jsPDF from 'jspdf';
+import { auth } from "@/lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { useProStatus } from "@/hooks/useProStatus";
 
 export default function IdCardMerger() {
   const [frontImage, setFrontImage] = useState(null);
   const [backImage, setBackImage] = useState(null);
+  const [premiumAlert, setPremiumAlert] = useState({ show: false, message: "" });
+  const [user, setUser] = useState(null);
+  const { isPro } = useProStatus(user);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const handleFileDrop = (e, side) => {
     e.preventDefault();
     const file = e.dataTransfer ? e.dataTransfer.files[0] : e.target.files[0];
     if (file && (file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/webp')) {
+      
+      // Limit for free users: Max 2MB per image
+      if (file.size > 2097152 && !isPro) {
+        setPremiumAlert({
+          show: true,
+          message: "You are trying to upload a high-resolution image over 2MB. Upgrade to Pro to merge large files without quality loss!"
+        });
+        if (e.target.value) e.target.value = "";
+        return;
+      }
+      
       const reader = new FileReader();
       reader.onload = (event) => {
         if (side === 'front') setFrontImage(event.target.result);
@@ -161,6 +185,47 @@ export default function IdCardMerger() {
           </div>
         </div>
       </div>
+
+      {/* Premium Alert Modal */}
+      {premiumAlert.show && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity">
+          <div className="bg-white dark:bg-[#09090b] w-full max-w-md rounded-[2rem] shadow-2xl border border-gray-100 dark:border-gray-800 p-8 relative animate-in fade-in zoom-in duration-300 text-left">
+            <button 
+              className="absolute top-6 right-6 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition"
+              onClick={() => setPremiumAlert({ show: false, message: "" })}
+            >
+              <i className="fa-solid fa-xmark text-xl"></i>
+            </button>
+            
+            <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center text-white text-3xl shadow-lg mb-6 shadow-orange-500/30">
+              <i className="fa-solid fa-crown"></i>
+            </div>
+            
+            <h3 className="text-2xl font-extrabold text-gray-900 dark:text-white mb-3">
+              Pro Feature Locked
+            </h3>
+            
+            <p className="text-gray-600 dark:text-gray-400 mb-8 font-medium leading-relaxed">
+              {premiumAlert.message}
+            </p>
+            
+            <div className="flex flex-col gap-3">
+              <a 
+                href="/pricing"
+                className="w-full text-center py-4 rounded-xl font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-md transition"
+              >
+                Upgrade to Pro (₹49)
+              </a>
+              <button 
+                onClick={() => setPremiumAlert({ show: false, message: "" })}
+                className="w-full text-center py-4 rounded-xl font-bold text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+              >
+                Maybe Later
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

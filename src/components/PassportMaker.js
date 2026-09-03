@@ -1,12 +1,37 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { auth } from "@/lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { useProStatus } from "@/hooks/useProStatus";
 
 export default function PassportMaker() {
   const [image, setImage] = useState(null);
   const [name, setName] = useState('');
   const [date, setDate] = useState('');
   const [preset, setPreset] = useState('ssc'); // 'ssc' or 'neet'
+  
+  const [premiumAlert, setPremiumAlert] = useState({ show: false, message: "" });
+  const [user, setUser] = useState(null);
+  const { isPro } = useProStatus(user);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handlePresetChange = (newPreset) => {
+    if (newPreset === 'neet' && !isPro) {
+      setPremiumAlert({
+        show: true,
+        message: "The NEET Postcard (4x6 inch) high-resolution preset is a Pro feature. Upgrade to Pro to generate official NTA Postcard photos!"
+      });
+      return;
+    }
+    setPreset(newPreset);
+  };
   
   const canvasRef = useRef(null);
   
@@ -180,7 +205,7 @@ export default function PassportMaker() {
               </label>
               <div className="flex flex-col sm:flex-row gap-3">
                 <button
-                  onClick={() => setPreset('ssc')}
+                  onClick={() => handlePresetChange('ssc')}
                   className={`flex-1 py-2 px-4 rounded-xl border text-sm font-semibold transition-colors ${
                     preset === 'ssc' 
                       ? 'bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-900/30 dark:border-blue-800 dark:text-blue-400' 
@@ -190,14 +215,14 @@ export default function PassportMaker() {
                   SSC/UPSC (3.5x4.5 cm)
                 </button>
                 <button
-                  onClick={() => setPreset('neet')}
-                  className={`flex-1 py-2 px-4 rounded-xl border text-sm font-semibold transition-colors ${
+                  onClick={() => handlePresetChange('neet')}
+                  className={`flex-1 py-2 px-4 rounded-xl border text-sm font-semibold transition-colors flex items-center justify-center gap-2 ${
                     preset === 'neet' 
                       ? 'bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-900/30 dark:border-blue-800 dark:text-blue-400' 
                       : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 dark:bg-transparent dark:border-gray-700 dark:text-gray-400'
                   }`}
                 >
-                  NEET Postcard (4x6 inch - 400x600 px)
+                  NEET Postcard (4x6 inch) {!isPro && <i className="fa-solid fa-lock text-xs text-amber-500"></i>}
                 </button>
               </div>
             </div>
@@ -295,6 +320,47 @@ export default function PassportMaker() {
           </div>
         </div>
       </div>
+
+      {/* Premium Alert Modal */}
+      {premiumAlert.show && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity">
+          <div className="bg-white dark:bg-[#09090b] w-full max-w-md rounded-[2rem] shadow-2xl border border-gray-100 dark:border-gray-800 p-8 relative animate-in fade-in zoom-in duration-300 text-left">
+            <button 
+              className="absolute top-6 right-6 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition"
+              onClick={() => setPremiumAlert({ show: false, message: "" })}
+            >
+              <i className="fa-solid fa-xmark text-xl"></i>
+            </button>
+            
+            <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center text-white text-3xl shadow-lg mb-6 shadow-orange-500/30">
+              <i className="fa-solid fa-crown"></i>
+            </div>
+            
+            <h3 className="text-2xl font-extrabold text-gray-900 dark:text-white mb-3">
+              Pro Feature Locked
+            </h3>
+            
+            <p className="text-gray-600 dark:text-gray-400 mb-8 font-medium leading-relaxed">
+              {premiumAlert.message}
+            </p>
+            
+            <div className="flex flex-col gap-3">
+              <a 
+                href="/pricing"
+                className="w-full text-center py-4 rounded-xl font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md transition"
+              >
+                Upgrade to Pro (₹49)
+              </a>
+              <button 
+                onClick={() => setPremiumAlert({ show: false, message: "" })}
+                className="w-full text-center py-4 rounded-xl font-bold text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+              >
+                Maybe Later
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

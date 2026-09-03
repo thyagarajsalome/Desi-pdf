@@ -2,6 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { jsPDF } from "jspdf";
+import { auth } from "@/lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { useProStatus } from "@/hooks/useProStatus";
 
 export default function AadhaarUnlocker() {
   const [file, setFile] = useState(null);
@@ -9,7 +12,17 @@ export default function AadhaarUnlocker() {
   const [showPassword, setShowPassword] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState(null);
-  
+  const [premiumAlert, setPremiumAlert] = useState({ show: false, message: "" });
+  const [user, setUser] = useState(null);
+  const { isPro } = useProStatus(user);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
+
   useEffect(() => {
     // Load pdf.js dynamically via CDN
     const script = document.createElement('script');
@@ -27,7 +40,19 @@ export default function AadhaarUnlocker() {
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
+      const selectedFile = e.target.files[0];
+      
+      // Limit for free users: Max 1MB
+      if (selectedFile.size > 1048576 && !isPro) {
+        setPremiumAlert({
+          show: true,
+          message: "You are trying to unlock a large PDF (over 1MB). Free tier allows up to 1MB. Upgrade to Pro to unlock large Bank Statements!"
+        });
+        e.target.value = "";
+        return;
+      }
+      
+      setFile(selectedFile);
       setError(null);
     }
   };
@@ -202,6 +227,47 @@ export default function AadhaarUnlocker() {
           </div>
         </div>
       </div>
+
+      {/* Premium Alert Modal */}
+      {premiumAlert.show && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity">
+          <div className="bg-white dark:bg-[#09090b] w-full max-w-md rounded-[2rem] shadow-2xl border border-gray-100 dark:border-gray-800 p-8 relative animate-in fade-in zoom-in duration-300 text-left">
+            <button 
+              className="absolute top-6 right-6 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition"
+              onClick={() => setPremiumAlert({ show: false, message: "" })}
+            >
+              <i className="fa-solid fa-xmark text-xl"></i>
+            </button>
+            
+            <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center text-white text-3xl shadow-lg mb-6 shadow-orange-500/30">
+              <i className="fa-solid fa-crown"></i>
+            </div>
+            
+            <h3 className="text-2xl font-extrabold text-gray-900 dark:text-white mb-3">
+              Pro Feature Locked
+            </h3>
+            
+            <p className="text-gray-600 dark:text-gray-400 mb-8 font-medium leading-relaxed">
+              {premiumAlert.message}
+            </p>
+            
+            <div className="flex flex-col gap-3">
+              <a 
+                href="/pricing"
+                className="w-full text-center py-4 rounded-xl font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-md transition"
+              >
+                Upgrade to Pro (₹49)
+              </a>
+              <button 
+                onClick={() => setPremiumAlert({ show: false, message: "" })}
+                className="w-full text-center py-4 rounded-xl font-bold text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+              >
+                Maybe Later
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
