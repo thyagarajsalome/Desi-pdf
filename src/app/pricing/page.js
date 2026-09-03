@@ -1,15 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Script from "next/script";
 import { useTheme } from "@/components/ThemeProvider";
 import { Check, Zap, Shield, Crown, Loader2 } from "lucide-react";
+import { auth } from "@/lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function PricingPage() {
   const { resolvedTheme } = useTheme();
   const [loadingPlan, setLoadingPlan] = useState(null);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const handlePayment = async (planName, amount) => {
+    if (!user) {
+      alert("Please login first to purchase a plan.");
+      return;
+    }
+
     setLoadingPlan(planName);
     try {
       // 1. Create order on our backend
@@ -38,14 +54,42 @@ export default function PricingPage() {
         theme: {
           color: resolvedTheme === "dark" ? "#4f46e5" : "#2563eb",
         },
-        handler: function (response) {
-          alert(`Payment Successful! Payment ID: ${response.razorpay_payment_id}`);
-          // Here we would update Firestore to unlock premium for this user
+        handler: async function (response) {
+          try {
+            // Calculate expiry
+            const now = new Date();
+            let pro_until = null;
+            if (planName.includes("24 Hrs") || planName.includes("Student")) {
+              now.setHours(now.getHours() + 24);
+              pro_until = now.toISOString();
+            } else if (planName.includes("Pro")) {
+              now.setMonth(now.getMonth() + 1);
+              pro_until = now.toISOString();
+            } else if (planName.includes("Lifetime")) {
+              now.setFullYear(now.getFullYear() + 100);
+              pro_until = now.toISOString();
+            }
+
+            // Save to Supabase
+            await supabase.from('user_profiles').upsert({
+              email: user.email,
+              is_pro: true,
+              pro_until: pro_until,
+              last_payment_id: response.razorpay_payment_id,
+              updated_at: new Date().toISOString()
+            }, { onConflict: 'email' });
+
+            alert(`Payment Successful! Your account has been upgraded to Pro.`);
+            window.location.href = "/"; // redirect home
+          } catch (err) {
+            console.error("Error upgrading account:", err);
+            alert(`Payment succeeded (ID: ${response.razorpay_payment_id}) but we couldn't update your account. Please contact support.`);
+          }
         },
         prefill: {
-          name: "Student Name",
-          email: "student@example.com",
-          contact: "9999999999",
+          name: user.displayName || "User",
+          email: user.email || "",
+          contact: "",
         },
       };
 

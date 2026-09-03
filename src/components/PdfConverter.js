@@ -3,9 +3,20 @@
 import { useState, useRef, useEffect } from "react";
 import JSZip from "jszip";
 import { auth } from "@/lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { useProStatus } from "@/hooks/useProStatus";
 
 export default function PdfConverter({ defaultFormat = "image/jpeg" }) {
   const [pdfjsLib, setPdfjsLib] = useState(null);
+  const [user, setUser] = useState(null);
+  const { isPro } = useProStatus(user);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -16,7 +27,11 @@ export default function PdfConverter({ defaultFormat = "image/jpeg" }) {
       setPdfjsLib(window.pdfjsLib);
     };
     document.body.appendChild(script);
-    return () => document.body.removeChild(script);
+    return () => {
+      if(document.body.contains(script)) {
+         document.body.removeChild(script);
+      }
+    }
   }, []);
 
   const [file, setFile] = useState(null);
@@ -61,12 +76,10 @@ export default function PdfConverter({ defaultFormat = "image/jpeg" }) {
         const typedarray = new Uint8Array(this.result);
         const loadedPdf = await pdfjsLib.getDocument({ data: typedarray }).promise;
         
-        // --- PREMIUM & ADMIN CHECK ---
+        // --- PREMIUM CHECK ---
         const numPages = loadedPdf.numPages;
-        const isAdmin = auth.currentUser?.email === "thyagarajsalome@gmail.com";
-        const isPremium = false; // We will check Firestore for this later
         
-        if (numPages > 5 && !isAdmin && !isPremium) {
+        if (numPages > 5 && !isPro) {
           setPremiumAlert({ 
             show: true, 
             message: `Your PDF has ${numPages} pages. The Free Plan allows a maximum of 5 pages. Upgrade to Pro for unlimited pages!` 

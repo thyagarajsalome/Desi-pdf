@@ -4,6 +4,8 @@ import { useState, useRef, useEffect } from "react";
 import { PDFDocument } from "pdf-lib";
 import { Loader2 } from "lucide-react";
 import { auth } from "@/lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { useProStatus } from "@/hooks/useProStatus";
 
 export default function PdfSplitter() {
   const [file, setFile] = useState(null);
@@ -14,6 +16,16 @@ export default function PdfSplitter() {
   const [premiumAlert, setPremiumAlert] = useState({ show: false, message: "" });
   const [resultUrl, setResultUrl] = useState(null);
   const canvasRef = useRef(null);
+  
+  const [user, setUser] = useState(null);
+  const { isPro } = useProStatus(user);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     if (window.pdfjsLib) {
@@ -54,8 +66,7 @@ export default function PdfSplitter() {
       const numPages = loadedPdf.numPages;
 
       // --- PREMIUM CHECK ---
-      const isAdmin = auth.currentUser?.email === "thyagarajsalome@gmail.com";
-      if (numPages > 20 && !isAdmin) {
+      if (numPages > 20 && !isPro) {
         setPremiumAlert({
           show: true,
           message: `This PDF has ${numPages} pages. The Free Plan allows splitting up to 20 pages. Upgrade to Pro for unlimited splitting!`

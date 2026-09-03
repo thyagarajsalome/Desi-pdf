@@ -1,7 +1,10 @@
 "use client";
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { jsPDF } from 'jspdf';
+import { auth } from "@/lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { useProStatus } from "@/hooks/useProStatus";
 
 export default function ImageToPdf() {
   const [images, setImages] = useState([]);
@@ -13,6 +16,16 @@ export default function ImageToPdf() {
   });
   const [draggedItemIndex, setDraggedItemIndex] = useState(null);
   const fileInputRef = useRef(null);
+
+  const [user, setUser] = useState(null);
+  const { isPro } = useProStatus(user);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const handleDrop = (e) => {
     e.preventDefault();
@@ -30,6 +43,15 @@ export default function ImageToPdf() {
   };
 
   const processFiles = (files) => {
+    if (images.length + files.length > 5 && !isPro) {
+      alert("Free users can only convert up to 5 images at a time. Please upgrade to Pro on the Pricing page for unlimited uploads!");
+      // only take the first 5 - current
+      const allowedCount = Math.max(0, 5 - images.length);
+      files = files.slice(0, allowedCount);
+    }
+    
+    if (files.length === 0) return;
+
     const newImages = files.map(file => ({
       id: Math.random().toString(36).substr(2, 9),
       file,

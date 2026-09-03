@@ -1,15 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PDFDocument } from "pdf-lib";
 import { Loader2 } from "lucide-react";
 import { auth } from "@/lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { useProStatus } from "@/hooks/useProStatus";
 
 export default function PdfMerger() {
   const [files, setFiles] = useState([]);
   const [isMerging, setIsMerging] = useState(false);
   const [result, setResult] = useState(null);
   const [premiumAlert, setPremiumAlert] = useState({ show: false, message: "" });
+  const [user, setUser] = useState(null);
+
+  const { isPro } = useProStatus(user);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const formatBytes = (bytes) => {
     if (bytes === 0) return "0 Bytes";
@@ -54,8 +66,7 @@ export default function PdfMerger() {
     }
 
     // --- PREMIUM CHECK: MAX 3 FILES for Free Users ---
-    const isAdmin = auth.currentUser?.email === "thyagarajsalome@gmail.com";
-    if (files.length > 3 && !isAdmin) {
+    if (files.length > 3 && !isPro) {
       setPremiumAlert({
         show: true,
         message: `You are trying to merge ${files.length} files. The Free Plan allows a maximum of 3 files. Upgrade to Pro to merge unlimited files!`

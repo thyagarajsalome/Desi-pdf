@@ -3,9 +3,21 @@
 import { useState, useRef, useEffect } from "react";
 import { jsPDF } from "jspdf";
 import { auth } from "@/lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { useProStatus } from "@/hooks/useProStatus";
 
 export default function PdfCompressor() {
   const [pdfjsLib, setPdfjsLib] = useState(null);
+  const [user, setUser] = useState(null);
+
+  const { isPro } = useProStatus(user);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     // If not already loaded by another component
@@ -49,8 +61,7 @@ export default function PdfCompressor() {
     }
     
     // --- PREMIUM CHECK: MAX 5MB File Size ---
-    const isAdmin = auth.currentUser?.email === "thyagarajsalome@gmail.com";
-    if (selectedFile.size > 5 * 1024 * 1024 && !isAdmin) { // 5MB in bytes
+    if (selectedFile.size > 5 * 1024 * 1024 && !isPro) { // 5MB in bytes
       setPremiumAlert({
         show: true,
         message: `Your file is ${formatBytes(selectedFile.size)}. The Free Plan allows files up to 5MB. Upgrade to Pro to compress massive PDF files!`
