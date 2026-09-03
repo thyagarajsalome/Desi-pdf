@@ -34,9 +34,9 @@ export default function Home() {
       color: "emerald",
       tools: [
         { id: "id-card-merger", title: "Aadhaar/PAN Merger", desc: "Front & Back to A4 PDF", icon: "fa-id-card", route: "/id-card-merger" },
-        { id: "ssc-photo", title: "SSC Photo Resizer", desc: "Resize to 20-50KB exactly", icon: "fa-id-badge", route: "/ssc-photo-compressor" },
-        { id: "ibps-sign", title: "IBPS Signature", desc: "Crop to 140x60 pixels", icon: "fa-signature", route: "/ssc-photo-compressor" },
-        { id: "thumb-impression", title: "Thumb Impression", desc: "Optimize ink scans", icon: "fa-fingerprint", route: "/thumb-impression" },
+        { id: "passport-maker", title: "SSC/NEET Photo", desc: "Add Name & Date strip", icon: "fa-camera-retro", route: "/passport-maker" },
+        { id: "ssc-photo", title: "SSC Photo Resizer", desc: "132x170 pixels maker", icon: "fa-crop", route: "/tool/ssc-photo-size-132x170-pixel" },
+        { id: "thumb-impression", title: "Thumb Impression", desc: "Enhance left thumb scan", icon: "fa-fingerprint", route: "/thumb-impression" },
       ]
     },
     {

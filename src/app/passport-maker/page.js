@@ -17,10 +17,10 @@ export default function PassportMakerPage() {
 
       <div className="max-w-3xl mx-auto mb-10 text-center">
         <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white tracking-tight mb-4">
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-teal-600">Passport</span> Photo Maker
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-teal-600">Exam Photo</span> Maker
         </h1>
         <p className="text-lg text-gray-600 dark:text-gray-400 font-medium">
-          Upload any selfie or portrait. Frame your face using our guides, and we will export a perfect 3.5cm x 4.5cm passport photo compressed to 20-50KB.
+          Automatically add your Name and Date of Capture on a white strip. Export perfect passport photos for SSC, NEET, and UPSC exams.
         </p>
       </div>
 
