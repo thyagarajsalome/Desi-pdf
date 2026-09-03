@@ -43,13 +43,14 @@ export default function Footer() {
           </div>
 
           <div>
-            <h4 className="font-bold text-gray-900 dark:text-white mb-4 uppercase tracking-wider text-sm">Govt & ID Tools</h4>
+            <h4 className="font-bold text-gray-900 dark:text-white mb-4 uppercase tracking-wider text-sm">Govt Forms</h4>
             <ul className="space-y-3 text-sm text-gray-500 dark:text-gray-400">
-              <li><Link href="/aadhaar-unlock" className="hover:text-indigo-600 transition">Aadhaar Unlocker</Link></li>
-              <li><Link href="/ssc-photo-compressor" className="hover:text-emerald-600 transition">SSC & IBPS Photo Resizer</Link></li>
-              <li><Link href="/pan-merge" className="hover:text-indigo-600 transition">PAN Card Merger</Link></li>
-              <li><Link href="/thumb-impression" className="hover:text-emerald-600 transition">Thumb Impression Optimizer</Link></li>
-              <li><Link href="/voter-id-pdf" className="hover:text-indigo-600 transition">Voter ID to PDF</Link></li>
+              <li><Link href="/id-card-merger" className="hover:text-emerald-600 transition">Aadhaar/PAN Merger</Link></li>
+              <li><Link href="/ssc-photo-compressor" className="hover:text-emerald-600 transition">SSC Photo Tool</Link></li>
+              <li><Link href="/thumb-impression" className="hover:text-emerald-600 transition">Thumb Impression Fixer</Link></li>
+              <li><Link href="/aadhaar-unlock" className="hover:text-emerald-600 transition">Aadhaar PDF Unlocker</Link></li>
+              <li><Link href="/pan-merge" className="hover:text-emerald-600 transition">PAN Card PDF Merge</Link></li>
+              <li><Link href="/voter-id-pdf" className="hover:text-emerald-600 transition">Voter ID to PDF</Link></li>
             </ul>
           </div>
 

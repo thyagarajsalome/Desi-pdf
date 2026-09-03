@@ -17,6 +17,7 @@ import BackgroundRemover from "@/components/BackgroundRemover";
 import SignatureMaker from "@/components/SignatureMaker";
 import AgeCalculator from "@/components/AgeCalculator";
 import JpgToWebp from "@/components/JpgToWebp";
+import IdCardMerger from "@/components/IdCardMerger";
 
 // Next.js static generation (SSG) revalidation time (e.g., 24 hours)
 export const revalidate = 86400;
@@ -60,6 +61,7 @@ export default async function PseoToolPage({ params }) {
     "ibps-sign": SscPhotoResizer,
     "aadhaar-unlock": AadhaarUnlocker,
     "pan-merge": PanMerger,
+    "id-card-merger": IdCardMerger,
     "voter-id-pdf": VoterIdPdf,
     "thumb-impression": ThumbOptimizer,
     "passport-maker": PassportMaker,

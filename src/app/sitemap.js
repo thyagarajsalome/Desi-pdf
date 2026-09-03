@@ -22,6 +22,7 @@ export default async function sitemap() {
     "/pan-merge",
     "/voter-id-pdf",
     "/jpg-to-webp",
+    "/id-card-merger",
     "/pricing",
     "/about",
     "/privacy",
