@@ -112,7 +112,7 @@ export default async function PseoToolPage({ params }) {
 
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">How to use this tool:</h2>
           <div className="space-y-4">
-            {pageData.how_to.map((step, idx) => (
+            {(typeof pageData.how_to === 'string' ? JSON.parse(pageData.how_to) : pageData.how_to).map((step, idx) => (
               <div key={idx} className="flex items-start gap-4">
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
                   {idx + 1}
@@ -129,7 +129,7 @@ export default async function PseoToolPage({ params }) {
         </div>
         
         <div className="space-y-6">
-          {pageData.faqs.map((faq, idx) => (
+          {(typeof pageData.faqs === 'string' ? JSON.parse(pageData.faqs) : pageData.faqs).map((faq, idx) => (
             <div key={idx} className="bg-white dark:bg-[#09090b] border border-gray-200 dark:border-gray-800 rounded-2xl p-6 hover:shadow-md transition">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3 flex items-start gap-3">
                 <i className="fa-solid fa-circle-question text-blue-500 mt-1"></i> {faq.q}
