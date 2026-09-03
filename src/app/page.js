@@ -21,6 +21,7 @@ export default function Home() {
       tools: [
         { id: "image-to-pdf", title: "Image to PDF", desc: "Convert JPG/PNG to PDF", icon: "fa-file-image", route: "/image-to-pdf" },
         { id: "image-compressor", title: "Image Compressor", desc: "Compress to any KB size", icon: "fa-compress", route: "/image-compressor" },
+        { id: "jpg-to-webp", title: "JPG to WEBP", desc: "Convert images to WEBP", icon: "fa-file-export", route: "/jpg-to-webp" },
         { id: "passport-photo", title: "Passport Photo Maker", desc: "Crop to 3.5x4.5cm", icon: "fa-camera", route: "/passport-maker" },
         { id: "age-calculator", title: "Age Calculator", desc: "Check exam eligibility", icon: "fa-calculator", route: "/age-calculator" },
       ]

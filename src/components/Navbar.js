@@ -56,9 +56,9 @@ export default function Navbar() {
           <nav className="hidden lg:flex items-center gap-6">
             <Link href="/" className="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition">All Tools</Link>
             <Link href="/image-to-pdf" className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition">Image to PDF</Link>
+            <Link href="/jpg-to-webp" className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition">JPG to WEBP</Link>
             <Link href="/image-compressor" className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition">Compress Image</Link>
             <Link href="/compress" className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition">Compress PDF</Link>
-            <Link href="/merge" className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition">Merge</Link>
           </nav>
 
           <div className="flex items-center gap-2">
@@ -129,6 +129,7 @@ export default function Navbar() {
             <Link onClick={() => setMobileMenuOpen(false)} href="/" className="block px-3 py-2 rounded-lg text-sm font-semibold text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-900">All Tools</Link>
             <Link onClick={() => setMobileMenuOpen(false)} href="/image-to-pdf" className="block px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900">Image to PDF</Link>
             <Link onClick={() => setMobileMenuOpen(false)} href="/image-compressor" className="block px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900">Compress Image</Link>
+            <Link onClick={() => setMobileMenuOpen(false)} href="/jpg-to-webp" className="block px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900">JPG to WEBP</Link>
             <Link onClick={() => setMobileMenuOpen(false)} href="/pdf-to-jpg" className="block px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900">PDF to JPG</Link>
             <Link onClick={() => setMobileMenuOpen(false)} href="/compress" className="block px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900">Compress PDF</Link>
             <Link onClick={() => setMobileMenuOpen(false)} href="/merge" className="block px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900">Merge PDF</Link>

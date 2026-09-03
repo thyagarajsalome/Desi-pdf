@@ -13,6 +13,7 @@ import PdfSplitter from "@/components/PdfSplitter";
 import ImageToPdf from "@/components/ImageToPdf";
 import ImageCompressor from "@/components/ImageCompressor";
 import AgeCalculator from "@/components/AgeCalculator";
+import JpgToWebp from "@/components/JpgToWebp";
 
 // Next.js static generation (SSG) revalidation time (e.g., 24 hours)
 export const revalidate = 86400;
@@ -66,6 +67,7 @@ export default async function PseoToolPage({ params }) {
     "image-to-pdf": ImageToPdf,
     "image-compressor": ImageCompressor,
     "age-calculator": AgeCalculator,
+    "jpg-to-webp": JpgToWebp,
   }[pageData.tool_target];
 
   return (

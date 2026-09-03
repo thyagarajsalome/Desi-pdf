@@ -18,6 +18,7 @@ export default async function sitemap() {
     "/aadhaar-unlock",
     "/pan-merge",
     "/voter-id-pdf",
+    "/jpg-to-webp",
     "/pricing",
     "/about",
     "/privacy",
