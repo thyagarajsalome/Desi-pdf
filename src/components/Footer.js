@@ -33,6 +33,9 @@ export default function Footer() {
             <ul className="space-y-3 text-sm text-gray-500 dark:text-gray-400">
               <li><Link href="/image-to-pdf" className="hover:text-amber-600 transition">Image to PDF</Link></li>
               <li><Link href="/image-compressor" className="hover:text-amber-600 transition">Image Compressor</Link></li>
+              <li><Link href="/image-resizer" className="hover:text-amber-600 transition">Image Resizer</Link></li>
+              <li><Link href="/background-remover" className="hover:text-amber-600 transition">Background Remover</Link></li>
+              <li><Link href="/signature-maker" className="hover:text-amber-600 transition">Signature Maker</Link></li>
               <li><Link href="/jpg-to-webp" className="hover:text-amber-600 transition">JPG to WEBP</Link></li>
               <li><Link href="/passport-maker" className="hover:text-amber-600 transition">Passport Photo Maker</Link></li>
               <li><Link href="/age-calculator" className="hover:text-amber-600 transition">Age Calculator</Link></li>

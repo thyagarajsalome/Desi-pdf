@@ -12,6 +12,9 @@ import PdfMerger from "@/components/PdfMerger";
 import PdfSplitter from "@/components/PdfSplitter";
 import ImageToPdf from "@/components/ImageToPdf";
 import ImageCompressor from "@/components/ImageCompressor";
+import ImageResizer from "@/components/ImageResizer";
+import BackgroundRemover from "@/components/BackgroundRemover";
+import SignatureMaker from "@/components/SignatureMaker";
 import AgeCalculator from "@/components/AgeCalculator";
 import JpgToWebp from "@/components/JpgToWebp";
 
@@ -66,6 +69,9 @@ export default async function PseoToolPage({ params }) {
     "pdf-split": PdfSplitter,
     "image-to-pdf": ImageToPdf,
     "image-compressor": ImageCompressor,
+    "image-resizer": ImageResizer,
+    "background-remover": BackgroundRemover,
+    "signature-maker": SignatureMaker,
     "age-calculator": AgeCalculator,
     "jpg-to-webp": JpgToWebp,
   }[pageData.tool_target];

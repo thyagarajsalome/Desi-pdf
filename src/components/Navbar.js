@@ -129,10 +129,13 @@ export default function Navbar() {
             <Link onClick={() => setMobileMenuOpen(false)} href="/" className="block px-3 py-2 rounded-lg text-sm font-semibold text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-900">All Tools</Link>
             <Link onClick={() => setMobileMenuOpen(false)} href="/image-to-pdf" className="block px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900">Image to PDF</Link>
             <Link onClick={() => setMobileMenuOpen(false)} href="/image-compressor" className="block px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900">Compress Image</Link>
-            <Link onClick={() => setMobileMenuOpen(false)} href="/jpg-to-webp" className="block px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900">JPG to WEBP</Link>
+            <Link onClick={() => setMobileMenuOpen(false)} href="/image-resizer" className="block px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900">Resize Image</Link>
+            <Link onClick={() => setMobileMenuOpen(false)} href="/background-remover" className="block px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900">Remove BG</Link>
+            <Link onClick={() => setMobileMenuOpen(false)} href="/signature-maker" className="block px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900">Signature Maker</Link>
             <Link onClick={() => setMobileMenuOpen(false)} href="/pdf-to-jpg" className="block px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900">PDF to JPG</Link>
             <Link onClick={() => setMobileMenuOpen(false)} href="/compress" className="block px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900">Compress PDF</Link>
             <Link onClick={() => setMobileMenuOpen(false)} href="/merge" className="block px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900">Merge PDF</Link>
+            <Link onClick={() => setMobileMenuOpen(false)} href="/jpg-to-webp" className="block px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900">JPG to WEBP</Link>
             <Link onClick={() => setMobileMenuOpen(false)} href="/age-calculator" className="block px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900">Age Calculator</Link>
           </div>
           
