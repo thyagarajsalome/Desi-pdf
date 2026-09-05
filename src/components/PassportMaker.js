@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { auth } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { useProStatus } from "@/hooks/useProStatus";
+import SecurityBadge from "@/components/SecurityBadge";
 
 export default function PassportMaker() {
   const [image, setImage] = useState(null);
@@ -299,6 +300,10 @@ export default function PassportMaker() {
               <i className="fa-solid fa-download"></i>
               Download Photo
             </button>
+
+            <div className="pt-2 flex justify-center">
+              <SecurityBadge />
+            </div>
           </div>
 
           {/* Right Column: Preview */}

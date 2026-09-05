@@ -5,6 +5,7 @@ import jsPDF from 'jspdf';
 import { auth } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { useProStatus } from "@/hooks/useProStatus";
+import SecurityBadge from "@/components/SecurityBadge";
 
 export default function IdCardMerger() {
   const [frontImage, setFrontImage] = useState(null);
@@ -175,6 +176,8 @@ export default function IdCardMerger() {
           >
             <i className="fa-solid fa-file-pdf mr-2"></i> Download as PDF
           </button>
+
+          <SecurityBadge />
 
           <div className="bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-400 rounded-xl p-4 flex items-start gap-3 w-full max-w-2xl border border-blue-100 dark:border-blue-900/30">
             <i className="fa-solid fa-lightbulb mt-1 text-blue-500 dark:text-blue-400"></i>

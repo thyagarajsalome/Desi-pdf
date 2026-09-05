@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef, useState, useEffect } from 'react';
+import SecurityBadge from "@/components/SecurityBadge";
 
 export default function SignatureMaker() {
   const canvasRef = useRef(null);
@@ -296,6 +297,10 @@ export default function SignatureMaker() {
           <i className="fa-solid fa-circle-info mt-1 mr-2 flex-shrink-0"></i>
           <span><strong>Note:</strong> Always use Black or Blue ink for official government and bank signatures. Red ink is usually not accepted.</span>
         </p>
+      </div>
+
+      <div className="mt-6 flex justify-center">
+        <SecurityBadge />
       </div>
     </div>
   );

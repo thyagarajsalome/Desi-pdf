@@ -5,6 +5,7 @@ import { jsPDF } from "jspdf";
 import { auth } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { useProStatus } from "@/hooks/useProStatus";
+import SecurityBadge from "@/components/SecurityBadge";
 
 export default function AadhaarUnlocker() {
   const [file, setFile] = useState(null);
@@ -220,11 +221,8 @@ export default function AadhaarUnlocker() {
         </div>
         
         {/* Security Note */}
-        <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800 text-center">
-          <div className="flex items-center justify-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-            <i className="fa-solid fa-shield-halved text-emerald-500"></i>
-            <p><strong>100% Private.</strong> Your password and PDF are processed locally in your browser and never sent to our servers.</p>
-          </div>
+        <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800 flex justify-center">
+          <SecurityBadge />
         </div>
       </div>
 

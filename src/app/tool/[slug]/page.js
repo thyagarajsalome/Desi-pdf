@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabaseClient";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import SscPhotoResizer from "@/components/SscPhotoResizer";
 import AadhaarUnlocker from "@/components/AadhaarUnlocker";
 import PanMerger from "@/components/PanMerger";
@@ -142,6 +143,86 @@ export default async function PseoToolPage({ params }) {
             </div>
           ))}
         </div>
+        {/* Related Tools Inter-Linking Section */}
+        {(() => {
+          const relatedMap = {
+            "ssc-photo": [
+              { title: "Signature Maker", desc: "Draw or type exam signature", route: "/signature-maker", icon: "fa-signature" },
+              { title: "Image Compressor", desc: "Compress image to exact KB", route: "/image-compressor", icon: "fa-compress" },
+              { title: "Exam Photo Maker", desc: "Add Name & Date strip", route: "/passport-maker", icon: "fa-camera-retro" },
+            ],
+            "passport-maker": [
+              { title: "SSC Photo Resizer", desc: "Resize to 132x170 px", route: "/tool/ssc-photo-size-132x170-pixel", icon: "fa-crop" },
+              { title: "Background Remover", desc: "Change photo to white background", route: "/background-remover", icon: "fa-wand-magic-sparkles" },
+              { title: "Image Compressor", desc: "Compress to 20KB - 50KB", route: "/image-compressor", icon: "fa-compress" },
+            ],
+            "id-card-merger": [
+              { title: "Aadhaar PDF Unlocker", desc: "Remove PDF password", route: "/aadhaar-unlock", icon: "fa-unlock-keyhole" },
+              { title: "PDF Compressor", desc: "Reduce PDF size under 1MB", route: "/compress", icon: "fa-file-zipper" },
+              { title: "PDF to JPG", desc: "Convert PDF pages into images", route: "/pdf-to-jpg", icon: "fa-file-image" },
+            ],
+            "aadhaar-unlock": [
+              { title: "Aadhaar/PAN Merger", desc: "Merge front & back on A4 PDF", route: "/id-card-merger", icon: "fa-id-card" },
+              { title: "PDF Compressor", desc: "Shrink document size for portals", route: "/compress", icon: "fa-file-zipper" },
+              { title: "Merge PDFs", desc: "Combine multiple docs into one", route: "/merge", icon: "fa-layer-group" },
+            ],
+            "image-resizer": [
+              { title: "Image Compressor", desc: "Compress to 20KB or 50KB", route: "/image-compressor", icon: "fa-compress" },
+              { title: "Signature Maker", desc: "Create 140x60 bank signature", route: "/signature-maker", icon: "fa-signature" },
+              { title: "Background Remover", desc: "Make background white or transparent", route: "/background-remover", icon: "fa-wand-magic-sparkles" },
+            ],
+            "background-remover": [
+              { title: "Image Resizer", desc: "Set exact passport pixels", route: "/image-resizer", icon: "fa-crop-simple" },
+              { title: "Exam Photo Maker", desc: "Add Name & Date stamp", route: "/passport-maker", icon: "fa-camera-retro" },
+              { title: "JPG to WEBP", desc: "Convert to modern web format", route: "/jpg-to-webp", icon: "fa-file-image" },
+            ],
+            "signature-maker": [
+              { title: "Image Resizer", desc: "Resize signature to 140x60 px", route: "/image-resizer", icon: "fa-crop-simple" },
+              { title: "Thumb Impression", desc: "Enhance ink impression scan", route: "/thumb-impression", icon: "fa-fingerprint" },
+              { title: "Image to PDF", desc: "Combine signs & IDs to PDF", route: "/image-to-pdf", icon: "fa-images" },
+            ],
+          };
+
+          const defaultRelated = [
+            { title: "Image Compressor", desc: "Reduce image file size", route: "/image-compressor", icon: "fa-compress" },
+            { title: "PDF Merger", desc: "Combine documents into one PDF", route: "/merge", icon: "fa-layer-group" },
+            { title: "Aadhaar/PAN Merger", desc: "Front & back onto single A4", route: "/id-card-merger", icon: "fa-id-card" },
+          ];
+
+          const items = relatedMap[pageData.tool_target] || defaultRelated;
+
+          return (
+            <div className="mt-16 pt-12 border-t border-gray-200 dark:border-gray-800">
+              <div className="text-center mb-8">
+                <span className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-3 py-1 rounded-full">
+                  Recommended For You
+                </span>
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mt-3">
+                  Other Helpful Tools for Indian Forms
+                </h3>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {items.map((item, i) => (
+                  <Link
+                    key={i}
+                    href={item.route}
+                    className="p-5 rounded-2xl bg-white dark:bg-[#09090b] border border-gray-200 dark:border-gray-800 hover:border-blue-500 dark:hover:border-blue-500 shadow-sm hover:shadow-md transition-all group flex flex-col items-start"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                      <i className={`fa-solid ${item.icon}`}></i>
+                    </div>
+                    <h4 className="font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                      {item.title}
+                    </h4>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      {item.desc}
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
 
       </div>
     </div>
