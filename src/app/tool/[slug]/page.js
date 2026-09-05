@@ -79,10 +79,72 @@ export default async function PseoToolPage({ params }) {
     "jpg-to-webp": JpgToWebp,
   }[pageData.tool_target];
 
+  const parsedFaqs = (typeof pageData.faqs === 'string' ? JSON.parse(pageData.faqs) : pageData.faqs) || [];
+  const parsedHowTo = (typeof pageData.how_to === 'string' ? JSON.parse(pageData.how_to) : pageData.how_to) || [];
+
+  // 1. SoftwareApplication Schema
+  const softwareSchema = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": pageData.h1_title || "DesiPDF Online Tool",
+    "operatingSystem": "All (Web Browser)",
+    "applicationCategory": "UtilitiesApplication",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "INR"
+    },
+    "description": pageData.meta_description || pageData.hero_subtitle
+  };
+
+  // 2. FAQPage Schema
+  const faqSchema = parsedFaqs.length > 0 ? {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": parsedFaqs.map(faq => ({
+      "@type": "Question",
+      "name": faq.q,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": faq.a
+      }
+    }))
+  } : null;
+
+  // 3. HowTo Schema
+  const howToSchema = parsedHowTo.length > 0 ? {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": `How to use ${pageData.h1_title}`,
+    "step": parsedHowTo.map((step, idx) => ({
+      "@type": "HowToStep",
+      "position": idx + 1,
+      "text": step
+    }))
+  } : null;
+
   return (
     <div className="pt-16 pb-24 relative flex-grow flex flex-col items-center">
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
       
+      {/* Google Rich Structured Data Schemas */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareSchema) }}
+      />
+      {faqSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+        />
+      )}
+      {howToSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(howToSchema) }}
+        />
+      )}
+
       {/* Background Mesh */}
       <div className="absolute inset-0 -z-10 h-[60vh] w-full bg-transparent bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(#27272a_1px,transparent_1px)] [background-size:16px_16px]">
         <div className="absolute top-0 right-1/4 -z-10 w-[600px] h-[600px] bg-blue-100/50 dark:bg-blue-900/20 rounded-full blur-3xl opacity-50 -translate-y-1/3"></div>
@@ -115,7 +177,7 @@ export default async function PseoToolPage({ params }) {
 
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">How to use this tool:</h2>
           <div className="space-y-4">
-            {(typeof pageData.how_to === 'string' ? JSON.parse(pageData.how_to) : pageData.how_to).map((step, idx) => (
+            {parsedHowTo.map((step, idx) => (
               <div key={idx} className="flex items-start gap-4">
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
                   {idx + 1}
@@ -132,7 +194,7 @@ export default async function PseoToolPage({ params }) {
         </div>
         
         <div className="space-y-6">
-          {(typeof pageData.faqs === 'string' ? JSON.parse(pageData.faqs) : pageData.faqs).map((faq, idx) => (
+          {parsedFaqs.map((faq, idx) => (
             <div key={idx} className="bg-white dark:bg-[#09090b] border border-gray-200 dark:border-gray-800 rounded-2xl p-6 hover:shadow-md transition">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3 flex items-start gap-3">
                 <i className="fa-solid fa-circle-question text-blue-500 mt-1"></i> {faq.q}
