@@ -7,16 +7,8 @@ import { useTheme } from "@/components/ThemeProvider";
 import { useAuth } from "@/context/AuthContext";
 
 export default function Navbar() {
-  const { user, loading, signInWithGoogle, signOut } = useAuth();
+  const { user, loading, signOut } = useAuth();
   const { theme, setTheme, resolvedTheme } = useTheme();
-
-  const handleLogin = async () => {
-    try {
-      await signInWithGoogle();
-    } catch (error) {
-      console.error("Login Error:", error);
-    }
-  };
 
   const handleLogout = async () => {
     try {
@@ -93,13 +85,13 @@ export default function Navbar() {
                 </button>
               </div>
             ) : (
-              <button 
-                onClick={handleLogin}
+              <Link 
+                href="/login"
                 className="hidden md:flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100 text-white dark:text-gray-900 text-sm font-medium transition"
               >
                 <LogIn className="h-3.5 w-3.5" />
-                Sign In with Google
-              </button>
+                Sign In
+              </Link>
             )}
 
             {/* Mobile Menu Button */}
@@ -160,9 +152,9 @@ export default function Navbar() {
                 </button>
               </>
             ) : (
-              <button onClick={() => { handleLogin(); setMobileMenuOpen(false); }} className="flex justify-center items-center gap-2 px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg text-sm font-medium">
-                <LogIn className="h-4 w-4" /> Sign In with Google
-              </button>
+              <Link onClick={() => setMobileMenuOpen(false)} href="/login" className="flex justify-center items-center gap-2 px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg text-sm font-medium">
+                <LogIn className="h-4 w-4" /> Sign In
+              </Link>
             )}
           </div>
         </div>

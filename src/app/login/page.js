@@ -14,9 +14,8 @@ import { supabase } from "@/lib/supabaseClient";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { user: supabaseUser, loading: isAuthLoading, signInWithGoogle } = useAuth();
+  const { user: supabaseUser, loading: isAuthLoading } = useAuth();
   const [isEmailLoading, setIsEmailLoading] = useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   
   // Email/Password/Phone States
   const [isSignUp, setIsSignUp] = useState(false);
@@ -31,18 +30,6 @@ export default function LoginPage() {
       router.push("/");
     }
   }, [supabaseUser, router]);
-
-  const handleGoogleSignIn = async () => {
-    setIsGoogleLoading(true);
-    setAuthError("");
-    try {
-      await signInWithGoogle();
-    } catch (error) {
-      console.error("Google Auth Error:", error);
-      setAuthError(error.message || "Failed to sign in with Google. Please verify Supabase OAuth setup.");
-      setIsGoogleLoading(false);
-    }
-  };
 
   const handleEmailAuth = async (e) => {
     e.preventDefault();
@@ -170,28 +157,6 @@ export default function LoginPage() {
             {isEmailLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : (isSignUp ? "Sign Up" : "Sign In")}
           </button>
         </form>
-
-        <div className="relative flex items-center py-4">
-          <div className="flex-grow border-t border-gray-200 dark:border-gray-800"></div>
-          <span className="flex-shrink-0 mx-4 text-gray-400 dark:text-gray-500 text-sm font-bold uppercase tracking-wider">Or</span>
-          <div className="flex-grow border-t border-gray-200 dark:border-gray-800"></div>
-        </div>
-
-        <div className="flex flex-col gap-4 mt-4">
-          <button
-            type="button"
-            onClick={handleGoogleSignIn}
-            disabled={isEmailLoading || isGoogleLoading}
-            className="w-full flex items-center justify-center gap-3 bg-white dark:bg-[#09090b] border-2 border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-900 px-6 py-4 rounded-xl font-bold transition-all disabled:opacity-70 disabled:cursor-not-allowed"
-          >
-            {isGoogleLoading ? (
-              <Loader2 className="h-5 w-5 animate-spin text-gray-500" />
-            ) : (
-              <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="h-5 w-5" />
-            )}
-            <span>Continue with Google</span>
-          </button>
-        </div>
         
         <div className="mt-8 text-center">
           <button 
