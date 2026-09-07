@@ -7,18 +7,22 @@ import { Check, Zap, Shield, Crown, Loader2 } from "lucide-react";
 import { auth } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { supabase } from "@/lib/supabaseClient";
+import { useAuth } from "@/context/AuthContext";
 
 export default function PricingPage() {
   const { resolvedTheme } = useTheme();
+  const { user: supabaseUser } = useAuth();
   const [loadingPlan, setLoadingPlan] = useState(null);
-  const [user, setUser] = useState(null);
+  const [firebaseUser, setFirebaseUser] = useState(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
+      setFirebaseUser(currentUser);
     });
     return () => unsubscribe();
   }, []);
+
+  const user = supabaseUser || firebaseUser;
 
   const handlePayment = async (planName, amount) => {
     if (!user) {

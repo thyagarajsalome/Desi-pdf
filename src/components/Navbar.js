@@ -1,29 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { FileImage, LogIn, LogOut, Loader2, Moon, Sun, Crown } from "lucide-react";
-import { auth } from "@/lib/firebase";
-import { GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
 import { useTheme } from "@/components/ThemeProvider";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Navbar() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading, signInWithGoogle, signOut } = useAuth();
   const { theme, setTheme, resolvedTheme } = useTheme();
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
-
   const handleLogin = async () => {
-    const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
+      await signInWithGoogle();
     } catch (error) {
       console.error("Login Error:", error);
     }
@@ -31,7 +20,7 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
+      await signOut();
     } catch (error) {
       console.error("Logout Error:", error);
     }
@@ -80,7 +69,11 @@ export default function Navbar() {
               <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
             ) : user ? (
               <div className="hidden md:flex items-center gap-2">
-                <img src={user.photoURL || "https://ui-avatars.com/api/?name=User"} alt="Profile" className="h-7 w-7 rounded-full border border-gray-200 dark:border-gray-700" />
+                <img 
+                  src={user.user_metadata?.avatar_url || user.user_metadata?.picture || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.user_metadata?.full_name || user.email || 'User')}`} 
+                  alt="Profile" 
+                  className="h-7 w-7 rounded-full border border-gray-200 dark:border-gray-700 object-cover" 
+                />
                 
                 {user.email === "thyagarajsalome@gmail.com" && (
                   <Link 
@@ -94,6 +87,7 @@ export default function Navbar() {
                 <button 
                   onClick={handleLogout}
                   className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                  title="Log Out"
                 >
                   <LogOut className="h-4 w-4" />
                 </button>
@@ -104,7 +98,7 @@ export default function Navbar() {
                 className="hidden md:flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100 text-white dark:text-gray-900 text-sm font-medium transition"
               >
                 <LogIn className="h-3.5 w-3.5" />
-                Sign In
+                Sign In with Google
               </button>
             )}
 
@@ -147,8 +141,14 @@ export default function Navbar() {
             {user ? (
               <>
                 <div className="flex items-center gap-3 px-3 py-2">
-                  <img src={user.photoURL || "https://ui-avatars.com/api/?name=User"} alt="Profile" className="h-8 w-8 rounded-full" />
-                  <span className="font-medium text-sm text-gray-900 dark:text-white">{user.displayName}</span>
+                  <img 
+                    src={user.user_metadata?.avatar_url || user.user_metadata?.picture || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.user_metadata?.full_name || user.email || 'User')}`} 
+                    alt="Profile" 
+                    className="h-8 w-8 rounded-full object-cover" 
+                  />
+                  <span className="font-medium text-sm text-gray-900 dark:text-white truncate">
+                    {user.user_metadata?.full_name || user.displayName || user.email}
+                  </span>
                 </div>
                 {user.email === "thyagarajsalome@gmail.com" && (
                   <Link onClick={() => setMobileMenuOpen(false)} href="/admin" className="flex items-center gap-2 px-4 py-2.5 text-blue-600 dark:text-blue-400 rounded-lg text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-900/20 justify-center">

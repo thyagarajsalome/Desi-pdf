@@ -5,19 +5,18 @@ import { useRouter } from "next/navigation";
 import { auth, db } from "@/lib/firebase";
 import { doc, setDoc } from "firebase/firestore";
 import { 
-  GoogleAuthProvider, 
-  signInWithPopup, 
-  onAuthStateChanged,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword
 } from "firebase/auth";
 import { Loader2, FileImage } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { user: supabaseUser, loading: isAuthLoading, signInWithGoogle } = useAuth();
   const [isEmailLoading, setIsEmailLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   
   // Email/Password/Phone States
   const [isSignUp, setIsSignUp] = useState(false);
@@ -26,27 +25,21 @@ export default function LoginPage() {
   const [phone, setPhone] = useState("");
   const [authError, setAuthError] = useState("");
 
-  // If already logged in, redirect to home
+  // If already logged in via Supabase or Firebase, redirect to home
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        router.push("/");
-      } else {
-        setIsCheckingAuth(false);
-      }
-    });
-    return () => unsubscribe();
-  }, [router]);
+    if (supabaseUser) {
+      router.push("/");
+    }
+  }, [supabaseUser, router]);
 
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     setAuthError("");
-    const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
+      await signInWithGoogle();
     } catch (error) {
       console.error("Google Auth Error:", error);
-      setAuthError("Failed to sign in with Google. Please try again.");
+      setAuthError(error.message || "Failed to sign in with Google. Please verify Supabase OAuth setup.");
       setIsGoogleLoading(false);
     }
   };
@@ -93,7 +86,7 @@ export default function LoginPage() {
     }
   };
 
-  if (isCheckingAuth) {
+  if (isAuthLoading) {
     return (
       <div className="min-h-[80vh] flex items-center justify-center">
         <Loader2 className="h-8 w-8 text-blue-500 animate-spin" />

@@ -3,20 +3,28 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
-export function useProStatus(user) {
+export function useProStatus(passedUser) {
   const [isPro, setIsPro] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function checkStatus() {
-      if (!user) {
+      // Check passed user first, or fetch active Supabase user
+      let email = passedUser?.email;
+
+      if (!email) {
+        const { data: { session } } = await supabase.auth.getSession();
+        email = session?.user?.email;
+      }
+
+      if (!email) {
         setIsPro(false);
         setLoading(false);
         return;
       }
       
       // Admin is always Pro
-      if (user.email === "thyagarajsalome@gmail.com") {
+      if (email === "thyagarajsalome@gmail.com") {
         setIsPro(true);
         setLoading(false);
         return;
@@ -26,7 +34,7 @@ export function useProStatus(user) {
         const { data, error } = await supabase
           .from('user_profiles')
           .select('is_pro, pro_until')
-          .eq('email', user.email)
+          .eq('email', email)
           .single();
 
         if (error || !data) {
@@ -46,7 +54,7 @@ export function useProStatus(user) {
     }
     
     checkStatus();
-  }, [user]);
+  }, [passedUser]);
 
   return { isPro, loading };
 }
