@@ -10,8 +10,26 @@ const plusJakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata = {
-  title: "DesiPDF - Clean & Free PDF Tools",
-  description: "Convert, compress, and merge PDF files with absolute privacy.",
+  metadataBase: new URL("https://convertpdftojpg.in"),
+  title: {
+    default: "DesiPDF - Clean & Free PDF & Image Tools",
+    template: "%s | DesiPDF",
+  },
+  description: "Convert, compress, and merge PDF files and resize images with absolute privacy. 100% browser-based tools.",
+  alternates: {
+    canonical: "./",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
 };
 
 export default function RootLayout({ children }) {

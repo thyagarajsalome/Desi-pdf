@@ -41,6 +41,17 @@ export async function generateMetadata({ params }) {
   return {
     title: page.meta_title,
     description: page.meta_description,
+    alternates: {
+      canonical: `https://convertpdftojpg.in/tool/${slug}`,
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+      },
+    },
   };
 }
 
