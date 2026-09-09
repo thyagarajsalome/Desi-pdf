@@ -42,8 +42,8 @@ export default async function sitemap() {
   const dynamicMap = (seoPages || []).map((page) => ({
     url: `${baseUrl}/tool/${page.slug}`,
     lastModified: new Date(),
-    changeFrequency: "weekly",
-    priority: 0.7,
+    changeFrequency: "daily",
+    priority: 0.9,
   }));
 
   return [...staticMap, ...dynamicMap];

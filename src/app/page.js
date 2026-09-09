@@ -179,6 +179,60 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Popular Sarkari Exam & Quick Tools Directory (Internal Linking Hub) */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+        <div className="bg-gradient-to-br from-blue-50/70 to-indigo-50/50 dark:from-[#111116] dark:to-[#0c0c10] border border-blue-100 dark:border-gray-800 rounded-3xl p-8 sm:p-10 shadow-sm">
+          <div className="max-w-2xl mb-8">
+            <span className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400 bg-blue-100/60 dark:bg-blue-900/40 px-3 py-1 rounded-full">
+              Popular Form Tools &amp; Guides
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-3">
+              Direct Application Tools for Indian Aspirants
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+              Instant size converters, signature crops, and document unblockers matching official notification specifications.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            {[
+              { label: "SSC CGL Photo & Sign", url: "/tool/ssc-cgl-photo-signature-resize-online" },
+              { label: "SSC CHSL Photo Resizer", url: "/tool/ssc-chsl-photo-and-signature-resizer" },
+              { label: "SSC GD Constable Size", url: "/tool/ssc-gd-constable-photo-size-resizer" },
+              { label: "SSC MTS Photo 20-50KB", url: "/tool/ssc-mts-photo-resizer-online" },
+              { label: "RRB NTPC Photo 320x240", url: "/tool/rrb-ntpc-photo-and-signature-resizer" },
+              { label: "RRB ALP Document Tool", url: "/tool/rrb-alp-technician-photo-resizer" },
+              { label: "IBPS PO/Clerk Resizer", url: "/tool/ibps-po-clerk-photo-signature-resizer" },
+              { label: "SBI PO/Clerk Sign Crop", url: "/tool/sbi-po-clerk-photo-signature-resizer" },
+              { label: "UP Police Photo Format", url: "/tool/up-police-constable-photo-signature-resizer" },
+              { label: "UPSC NDA/CDS 350x350", url: "/tool/nda-cds-upsc-photo-resizer" },
+              { label: "CTET Photo Resizer 2026", url: "/tool/ctet-photo-and-signature-resizer" },
+              { label: "JEE Main NTA Format", url: "/tool/jee-main-photo-and-signature-resizer" },
+              { label: "Aadhaar Front & Back PDF", url: "/tool/aadhaar-card-front-and-back-pdf-maker" },
+              { label: "PAN Card Dono Side PDF", url: "/tool/pan-card-dono-side-ek-page-par-print" },
+              { label: "e-Aadhaar Password Remover", url: "/tool/eaadhaar-pdf-password-remover-online" },
+              { label: "Bank Statement Unlocker", url: "/tool/sbi-hdfc-bank-statement-password-unlocker" },
+              { label: "Photo Par Name & Date", url: "/tool/photo-par-name-aur-date-kaise-likhe" },
+              { label: "SSC CGL Photo with Date", url: "/tool/ssc-chsl-cgl-photo-with-date-maker" },
+              { label: "NEET Postcard 4x6 Maker", url: "/tool/neet-ug-postcard-size-photo-generator" },
+              { label: "फोटो साइज 20KB कैसे करें", url: "/tool/photo-ka-size-20kb-kaise-kare-hindi" },
+              { label: "आधार कार्ड आगे-पीछे PDF", url: "/tool/aadhaar-card-aage-piche-ek-page-par-kare" },
+              { label: "PDF का पासवर्ड हटाएं", url: "/tool/pdf-ka-password-kaise-hataye-hindi" },
+              { label: "हस्ताक्षर साइज 10-20KB", url: "/tool/signature-ka-size-kaise-kam-kare" },
+              { label: "फोटो पर नाम-तारीख लिखें", url: "/tool/photo-par-naam-aur-tarikh-kaise-dale" },
+            ].map((link, idx) => (
+              <Link
+                key={idx}
+                href={link.url}
+                className="text-xs sm:text-sm font-medium px-3.5 py-2.5 rounded-xl bg-white dark:bg-[#16161a] hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 border border-gray-200/80 dark:border-gray-800 transition-all text-gray-700 dark:text-gray-300 truncate shadow-2xs hover:shadow-sm"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* SEO FAQ Section */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-32">
         <div className="text-center mb-12">
