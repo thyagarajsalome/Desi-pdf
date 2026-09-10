@@ -20,6 +20,9 @@ export const metadata = {
   alternates: {
     canonical: "./",
   },
+  verification: {
+    google: "eIGuoLHf4b-3BLZA7nzDjmk39z12c7ICZQcmt4RVkYU",
+  },
   robots: {
     index: true,
     follow: true,
@@ -37,6 +40,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning className={`${plusJakarta.className} h-full antialiased`}>
       <head>
+        <meta name="google-site-verification" content="eIGuoLHf4b-3BLZA7nzDjmk39z12c7ICZQcmt4RVkYU" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
         <script dangerouslySetInnerHTML={{
           __html: `
