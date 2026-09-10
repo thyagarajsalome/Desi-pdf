@@ -20,6 +20,7 @@ import AgeCalculator from "@/components/AgeCalculator";
 import JpgToWebp from "@/components/JpgToWebp";
 import IdCardMerger from "@/components/IdCardMerger";
 import BiodataMaker from "@/components/BiodataMaker";
+import RailwayFormMaker from "@/components/RailwayFormMaker";
 
 // Next.js static generation (SSG) revalidation time (e.g., 24 hours)
 export const revalidate = 86400;
@@ -90,6 +91,7 @@ export default async function PseoToolPage({ params }) {
     "age-calculator": AgeCalculator,
     "jpg-to-webp": JpgToWebp,
     "biodata-maker": BiodataMaker,
+    "railway-form": RailwayFormMaker,
   }[pageData.tool_target];
 
   const parsedFaqs = (typeof pageData.faqs === 'string' ? JSON.parse(pageData.faqs) : pageData.faqs) || [];

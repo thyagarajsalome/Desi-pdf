@@ -45,6 +45,7 @@ export default function Footer() {
           <div>
             <h4 className="font-bold text-gray-900 dark:text-white mb-4 uppercase tracking-wider text-sm">Govt Forms</h4>
             <ul className="space-y-3 text-sm text-gray-500 dark:text-gray-400">
+              <li><Link href="/railway-reservation-form" className="hover:text-emerald-600 font-semibold transition">Railway Reservation Slip</Link></li>
               <li><Link href="/biodata-maker" className="hover:text-emerald-600 font-semibold transition">Sarkari Bio-Data Maker</Link></li>
               <li><Link href="/id-card-merger" className="hover:text-emerald-600 transition">Aadhaar/PAN Merger</Link></li>
               <li><Link href="/tool/ssc-cgl-photo-signature-resize-online" className="hover:text-emerald-600 transition">SSC CGL Photo &amp; Sign</Link></li>

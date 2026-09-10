@@ -29,6 +29,16 @@ export default function Home() {
           keywords: ["resume", "cv", "job", "marriage", "shaadi", "sarkari", "biodata", "biodata format", "pdf maker"]
         },
         {
+          id: "railway-form",
+          title: "Railway Reservation Slip",
+          desc: "Official PRS Counter Ticket Form A4 PDF",
+          icon: "fa-train",
+          route: "/railway-reservation-form",
+          badge: "IRCTC / PRS",
+          featured: true,
+          keywords: ["railway", "train", "reservation", "cancellation", "prs", "counter", "tatkal", "ticket", "form", "irctc"]
+        },
+        {
           id: "ssc-photo",
           title: "SSC & IBPS Photo Resizer",
           desc: "Exact 132x170 px & 20-50KB photo & sign",
@@ -299,6 +309,7 @@ export default function Home() {
 
   // Preset search suggestions
   const searchSuggestions = [
+    { label: "Railway Reservation Slip", query: "railway" },
     { label: "Sarkari Bio-Data", query: "biodata" },
     { label: "Aadhaar Password", query: "aadhaar" },
     { label: "SSC Photo 20-50KB", query: "ssc" },
