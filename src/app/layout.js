@@ -23,6 +23,14 @@ export const metadata = {
   verification: {
     google: "eIGuoLHf4b-3BLZA7nzDjmk39z12c7ICZQcmt4RVkYU",
   },
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/icon.svg",
+  },
   robots: {
     index: true,
     follow: true,
@@ -40,6 +48,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning className={`${plusJakarta.className} h-full antialiased`}>
       <head>
+        <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+        <link rel="alternate icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" href="/icon.svg" />
         <meta name="google-site-verification" content="eIGuoLHf4b-3BLZA7nzDjmk39z12c7ICZQcmt4RVkYU" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
         <script dangerouslySetInnerHTML={{
