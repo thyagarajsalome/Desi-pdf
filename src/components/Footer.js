@@ -45,10 +45,10 @@ export default function Footer() {
           <div>
             <h4 className="font-bold text-gray-900 dark:text-white mb-4 uppercase tracking-wider text-sm">Govt Forms</h4>
             <ul className="space-y-3 text-sm text-gray-500 dark:text-gray-400">
+              <li><Link href="/biodata-maker" className="hover:text-emerald-600 font-semibold transition">Sarkari Bio-Data Maker</Link></li>
               <li><Link href="/id-card-merger" className="hover:text-emerald-600 transition">Aadhaar/PAN Merger</Link></li>
               <li><Link href="/tool/ssc-cgl-photo-signature-resize-online" className="hover:text-emerald-600 transition">SSC CGL Photo &amp; Sign</Link></li>
               <li><Link href="/tool/rrb-ntpc-photo-and-signature-resizer" className="hover:text-emerald-600 transition">Railway RRB Resizer</Link></li>
-              <li><Link href="/tool/ibps-po-clerk-photo-signature-resizer" className="hover:text-emerald-600 transition">IBPS Bank Form Resizer</Link></li>
               <li><Link href="/tool/eaadhaar-pdf-password-remover-online" className="hover:text-emerald-600 transition">e-Aadhaar Unlocker</Link></li>
               <li><Link href="/tool/photo-ka-size-20kb-kaise-kare-hindi" className="hover:text-emerald-600 transition">फोटो साइज 20KB करें</Link></li>
             </ul>

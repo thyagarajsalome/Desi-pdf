@@ -33,6 +33,7 @@ export default function Home() {
       title: "Govt Exams & Forms 🇮🇳",
       color: "emerald",
       tools: [
+        { id: "biodata-maker", title: "Sarkari Bio-Data", desc: "1-Page Job & Matrimonial PDF", icon: "fa-file-lines", route: "/biodata-maker" },
         { id: "id-card-merger", title: "Aadhaar/PAN Merger", desc: "Front & Back to A4 PDF", icon: "fa-id-card", route: "/id-card-merger" },
         { id: "passport-maker", title: "SSC/NEET Photo", desc: "Add Name & Date strip", icon: "fa-camera-retro", route: "/passport-maker" },
         { id: "ssc-photo", title: "SSC Photo Resizer", desc: "132x170 pixels maker", icon: "fa-crop", route: "/tool/ssc-photo-size-132x170-pixel" },

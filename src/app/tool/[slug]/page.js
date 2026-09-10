@@ -19,6 +19,7 @@ import SignatureMaker from "@/components/SignatureMaker";
 import AgeCalculator from "@/components/AgeCalculator";
 import JpgToWebp from "@/components/JpgToWebp";
 import IdCardMerger from "@/components/IdCardMerger";
+import BiodataMaker from "@/components/BiodataMaker";
 
 // Next.js static generation (SSG) revalidation time (e.g., 24 hours)
 export const revalidate = 86400;
@@ -88,6 +89,7 @@ export default async function PseoToolPage({ params }) {
     "signature-maker": SignatureMaker,
     "age-calculator": AgeCalculator,
     "jpg-to-webp": JpgToWebp,
+    "biodata-maker": BiodataMaker,
   }[pageData.tool_target];
 
   const parsedFaqs = (typeof pageData.faqs === 'string' ? JSON.parse(pageData.faqs) : pageData.faqs) || [];

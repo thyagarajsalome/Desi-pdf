@@ -23,6 +23,7 @@ export default async function sitemap() {
     "/voter-id-pdf",
     "/jpg-to-webp",
     "/id-card-merger",
+    "/biodata-maker",
     "/pricing",
     "/about",
     "/privacy",
