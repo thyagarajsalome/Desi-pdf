@@ -1,18 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { FileImage, LogIn, LogOut, Loader2, Moon, Sun, Crown } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 import { useAuth } from "@/context/AuthContext";
+import { auth } from "@/lib/firebase";
+import { onAuthStateChanged, signOut as fbSignOut } from "firebase/auth";
 
 export default function Navbar() {
-  const { user, loading, signOut } = useAuth();
+  const { user: supabaseUser, loading: supabaseLoading, signOut: supabaseSignOut } = useAuth();
+  const [firebaseUser, setFirebaseUser] = useState(null);
+  const [fbLoading, setFbLoading] = useState(true);
   const { theme, setTheme, resolvedTheme } = useTheme();
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (fbUser) => {
+      setFirebaseUser(fbUser);
+      setFbLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const user = supabaseUser || firebaseUser;
+  const loading = supabaseLoading && fbLoading;
 
   const handleLogout = async () => {
     try {
-      await signOut();
+      if (supabaseUser) await supabaseSignOut();
+      if (firebaseUser) await fbSignOut(auth);
     } catch (error) {
       console.error("Logout Error:", error);
     }

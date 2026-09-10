@@ -6,7 +6,8 @@ import { auth, db } from "@/lib/firebase";
 import { doc, setDoc } from "firebase/firestore";
 import { 
   signInWithEmailAndPassword,
-  createUserWithEmailAndPassword
+  createUserWithEmailAndPassword,
+  onAuthStateChanged
 } from "firebase/auth";
 import { Loader2, FileImage } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
@@ -28,7 +29,14 @@ export default function LoginPage() {
   useEffect(() => {
     if (supabaseUser) {
       router.push("/");
+      return;
     }
+    const unsubscribe = onAuthStateChanged(auth, (fbUser) => {
+      if (fbUser) {
+        router.push("/");
+      }
+    });
+    return () => unsubscribe();
   }, [supabaseUser, router]);
 
   const handleEmailAuth = async (e) => {
@@ -151,7 +159,7 @@ export default function LoginPage() {
           </div>
           <button
             type="submit"
-            disabled={isEmailLoading || isGoogleLoading}
+            disabled={isEmailLoading}
             className="w-full mt-2 flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-4 rounded-xl font-bold shadow-md transition-all disabled:opacity-70 disabled:cursor-not-allowed"
           >
             {isEmailLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : (isSignUp ? "Sign Up" : "Sign In")}
