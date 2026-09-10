@@ -711,6 +711,14 @@ export default function Home() {
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {[
+              { label: "Railway Reservation Slip", url: "/railway-reservation-form" },
+              { label: "रेलवे फॉर्म कैसे भरें PDF", url: "/tool/railway-reservation-form-kaise-bhare-hindi" },
+              { label: "Railway Cancellation Slip", url: "/tool/railway-ticket-cancellation-form-pdf" },
+              { label: "Tatkal Form PDF Maker", url: "/tool/tatkal-reservation-form-pdf-download" },
+              { label: "नौकरी बायोडाटा फॉर्मेट", url: "/tool/naukri-ke-liye-biodata-format-hindi-pdf" },
+              { label: "विवाह बायोडाटा फॉर्मेट", url: "/tool/shaadi-ke-liye-biodata-format-in-hindi-pdf" },
+              { label: "Bulk JPG to WEBP", url: "/tool/bulk-jpg-to-webp-converter-online" },
+              { label: "फोटो WEBP में बदलें", url: "/tool/photo-ko-webp-me-kaise-badle-hindi" },
               { label: "SSC CGL Photo & Sign", url: "/tool/ssc-cgl-photo-signature-resize-online" },
               { label: "SSC CHSL Photo Resizer", url: "/tool/ssc-chsl-photo-and-signature-resizer" },
               { label: "SSC GD Constable Size", url: "/tool/ssc-gd-constable-photo-size-resizer" },
