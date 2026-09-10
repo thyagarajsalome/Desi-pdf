@@ -207,24 +207,16 @@ export default function BiodataMaker() {
       doc.line(margin + 2, y, pageWidth - margin - 2, y);
       y += 5;
 
-      // Reusable Section Header Function with light fill and subtle left accent
+      // Reusable Section Header Function with light clean fill (no colored accent bar)
       const drawSectionHeader = (titleText) => {
         doc.setFillColor(248, 250, 252); // soft slate-50
-        doc.setDrawColor(226, 232, 240);
+        doc.setDrawColor(226, 232, 240); // slate-200 border
         doc.rect(margin + 2, y, contentWidth - 4, 6, "FD");
-
-        // Left accent bar
-        if (template === "job") {
-          doc.setFillColor(37, 99, 235); // blue-600
-        } else {
-          doc.setFillColor(234, 88, 12); // orange-600
-        }
-        doc.rect(margin + 2, y, 2.5, 6, "F");
 
         doc.setFont("helvetica", "bold");
         doc.setFontSize(8.5);
         doc.setTextColor(30, 41, 59); // slate-800
-        doc.text(titleText, margin + 7, y + 4.2);
+        doc.text(titleText, margin + 5, y + 4.2);
         y += 8.5;
       };
 
@@ -911,7 +903,7 @@ export default function BiodataMaker() {
                   {/* Objective (Job) */}
                   {template === "job" && objective && (
                     <div className="mb-2.5">
-                      <div className="bg-slate-100 border-l-2 border-blue-600 px-2 py-0.5 rounded-r text-[8.5px] font-bold text-slate-800 mb-1">
+                      <div className="bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-[8.5px] font-bold text-slate-800 mb-1">
                         CAREER OBJECTIVE
                       </div>
                       <p className="text-[8px] text-slate-600 pl-1 line-clamp-2">
@@ -922,7 +914,7 @@ export default function BiodataMaker() {
 
                   {/* Personal Details Table */}
                   <div className="mb-2.5">
-                    <div className="bg-slate-100 border-l-2 border-blue-600 px-2 py-0.5 rounded-r text-[8.5px] font-bold text-slate-800 mb-1.5">
+                    <div className="bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-[8.5px] font-bold text-slate-800 mb-1.5">
                       PERSONAL DETAILS
                     </div>
                     <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[8px] pl-1">
@@ -946,7 +938,7 @@ export default function BiodataMaker() {
 
                   {/* Academic Qualifications Table */}
                   <div className="mb-2.5">
-                    <div className="bg-slate-100 border-l-2 border-blue-600 px-2 py-0.5 rounded-r text-[8.5px] font-bold text-slate-800 mb-1.5">
+                    <div className="bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-[8.5px] font-bold text-slate-800 mb-1.5">
                       ACADEMIC QUALIFICATIONS
                     </div>
                     <table className="w-full border-collapse border border-slate-200 text-[7.5px]">
@@ -990,7 +982,7 @@ export default function BiodataMaker() {
                   ) : (
                     familyDetails && (
                       <div className="mb-2">
-                        <div className="bg-slate-100 border-l-2 border-amber-600 px-2 py-0.5 rounded-r text-[8.5px] font-bold text-slate-800 mb-1">
+                        <div className="bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-[8.5px] font-bold text-slate-800 mb-1">
                           FAMILY DETAILS
                         </div>
                         <p className="text-[7.5px] text-slate-600 pl-1">{familyDetails}</p>
