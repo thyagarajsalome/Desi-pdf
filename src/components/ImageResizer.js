@@ -35,6 +35,7 @@ export default function ImageResizer() {
     { label: "Bank Signature (140x60 px)", width: 140, height: 60 },
     { label: "UPSC Photo (300x300 px)", width: 300, height: 300 },
     { label: "Passport (350x450 px)", width: 350, height: 450 },
+    { label: "HD Portrait (720x1280 px)", width: 720, height: 1280 },
     { label: "Instagram Square (1080x1080 px)", width: 1080, height: 1080 },
   ];
 
