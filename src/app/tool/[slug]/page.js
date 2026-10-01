@@ -1,7 +1,6 @@
 import { supabase } from "@/lib/supabaseClient";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import Link from "next/link";
-import { QUALITY_EXAM_SLUGS, SPECIFIC_SLUG_REDIRECTS, TOOL_CANONICAL_MAP } from "@/lib/qualityPages";
 import SscPhotoResizer from "@/components/SscPhotoResizer";
 import AadhaarUnlocker from "@/components/AadhaarUnlocker";
 import PanMerger from "@/components/PanMerger";
@@ -27,29 +26,25 @@ import RailwayFormMaker from "@/components/RailwayFormMaker";
 export const revalidate = 86400;
 
 export async function generateStaticParams() {
-  return QUALITY_EXAM_SLUGS.map((slug) => ({ slug }));
+  const { data: pages } = await supabase.from('seo_pages').select('slug');
+  return pages?.map((page) => ({ slug: page.slug })) || [];
 }
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
 
-  if (!QUALITY_EXAM_SLUGS.includes(slug)) {
-    return {
-      title: "Redirecting...",
-      robots: {
-        index: false,
-        follow: true,
-      },
-    };
-  }
-
   const { data: page } = await supabase
     .from('seo_pages')
     .select('meta_title, meta_description')
     .eq('slug', slug)
-    .single();
+    .maybeSingle();
 
-  if (!page) return { title: "Not Found" };
+  if (!page) {
+    return { 
+      title: "Tool Not Found | DesiPDF",
+      robots: { index: false, follow: false }
+    };
+  }
 
   return {
     title: page.meta_title,
@@ -63,6 +58,9 @@ export async function generateMetadata({ params }) {
       googleBot: {
         index: true,
         follow: true,
+        "max-video-preview": -1,
+        "max-image-preview": "large",
+        "max-snippet": -1,
       },
     },
   };
@@ -71,32 +69,11 @@ export async function generateMetadata({ params }) {
 export default async function PseoToolPage({ params }) {
   const { slug } = await params;
 
-  // 1. If not a curated high-quality hub, perform 301 permanent redirect to consolidate authority
-  if (!QUALITY_EXAM_SLUGS.includes(slug)) {
-    // Check specific redirect first (e.g., duplicate exam slug -> master exam hub)
-    if (SPECIFIC_SLUG_REDIRECTS[slug]) {
-      redirect(SPECIFIC_SLUG_REDIRECTS[slug], "permanent");
-    }
-
-    // Check database to find target canonical tool
-    const { data: fallbackData } = await supabase
-      .from('seo_pages')
-      .select('tool_target')
-      .eq('slug', slug)
-      .maybeSingle();
-
-    if (fallbackData?.tool_target && TOOL_CANONICAL_MAP[fallbackData.tool_target]) {
-      redirect(TOOL_CANONICAL_MAP[fallbackData.tool_target], "permanent");
-    }
-
-    notFound();
-  }
-
   const { data: pageData } = await supabase
     .from('seo_pages')
     .select('*')
     .eq('slug', slug)
-    .single();
+    .maybeSingle();
   
   if (!pageData) {
     notFound();

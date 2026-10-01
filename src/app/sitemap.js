@@ -1,4 +1,4 @@
-import { QUALITY_EXAM_SLUGS } from "@/lib/qualityPages";
+import { supabase } from "@/lib/supabaseClient";
 
 export default async function sitemap() {
   const baseUrl = "https://convertpdftojpg.in";
@@ -39,9 +39,10 @@ export default async function sitemap() {
     priority: route === "" ? 1.0 : 0.8,
   }));
 
-  // Only include curated, authoritative exam hubs in the sitemap
-  const dynamicMap = QUALITY_EXAM_SLUGS.map((slug) => ({
-    url: `${baseUrl}/tool/${slug}`,
+  const { data: seoPages } = await supabase.from('seo_pages').select('slug');
+
+  const dynamicMap = (seoPages || []).map((page) => ({
+    url: `${baseUrl}/tool/${page.slug}`,
     lastModified: new Date(),
     changeFrequency: "weekly",
     priority: 0.85,
