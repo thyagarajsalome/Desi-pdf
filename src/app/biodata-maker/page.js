@@ -4,7 +4,7 @@ export const metadata = {
   title: "Sarkari Bio-Data & Resume PDF Maker Online (Free)",
   description: "Create official 1-page Indian government job bio-data, resume, or matrimonial format in 2 minutes. Add photo, education table, and download print-ready PDF.",
   alternates: {
-    canonical: "https://convertpdftojpg.in/biodata-maker",
+    canonical: "https://www.convertpdftojpg.in/biodata-maker",
   },
 };
 

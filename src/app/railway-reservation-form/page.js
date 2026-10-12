@@ -13,7 +13,7 @@ export const metadata = {
     "railway reservation form hindi english"
   ],
   alternates: {
-    canonical: "https://convertpdftojpg.in/railway-reservation-form",
+    canonical: "https://www.convertpdftojpg.in/railway-reservation-form",
   },
 };
 

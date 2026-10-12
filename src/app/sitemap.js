@@ -1,7 +1,7 @@
 import { supabase } from "@/lib/supabaseClient";
 
 export default async function sitemap() {
-  const baseUrl = "https://convertpdftojpg.in";
+  const baseUrl = "https://www.convertpdftojpg.in";
 
   const staticRoutes = [
     "",

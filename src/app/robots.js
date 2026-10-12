@@ -1,5 +1,5 @@
 export default function robots() {
-  const baseUrl = "https://convertpdftojpg.in";
+  const baseUrl = "https://www.convertpdftojpg.in";
 
   return {
     rules: [

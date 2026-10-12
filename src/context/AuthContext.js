@@ -39,7 +39,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const signInWithGoogle = async () => {
-    const origin = typeof window !== "undefined" ? window.location.origin : "https://convertpdftojpg.in";
+    const origin = typeof window !== "undefined" ? window.location.origin : "https://www.convertpdftojpg.in";
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {

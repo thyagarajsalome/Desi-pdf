@@ -11,7 +11,7 @@ const plusJakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata = {
-  metadataBase: new URL("https://convertpdftojpg.in"),
+  metadataBase: new URL("https://www.convertpdftojpg.in"),
   title: {
     default: "DesiPDF - Clean & Free PDF & Image Tools",
     template: "%s | DesiPDF",
