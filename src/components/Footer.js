@@ -22,6 +22,7 @@ export default function Footer() {
             <h4 className="font-bold text-gray-900 dark:text-white mb-4 uppercase tracking-wider text-sm">PDF Tools</h4>
             <ul className="space-y-3 text-sm text-gray-500 dark:text-gray-400">
               <li><Link href="/pdf-to-jpg" className="hover:text-blue-600 transition">PDF to JPG</Link></li>
+              <li><Link href="/tool/pdf-to-jpg-high-quality" className="hover:text-blue-600 transition">PDF to JPG High Quality</Link></li>
               <li><Link href="/merge" className="hover:text-blue-600 transition">Merge PDF</Link></li>
               <li><Link href="/compress" className="hover:text-blue-600 transition">Compress PDF</Link></li>
               <li><Link href="/split" className="hover:text-blue-600 transition">Split PDF</Link></li>
@@ -49,6 +50,8 @@ export default function Footer() {
               <li><Link href="/biodata-maker" className="hover:text-emerald-600 font-semibold transition">Sarkari Bio-Data Maker</Link></li>
               <li><Link href="/id-card-merger" className="hover:text-emerald-600 transition">Aadhaar/PAN Merger</Link></li>
               <li><Link href="/tool/ssc-cgl-photo-signature-resize-online" className="hover:text-emerald-600 transition">SSC CGL Photo &amp; Sign</Link></li>
+              <li><Link href="/tool/upsc-image-resizer-online" className="hover:text-emerald-600 transition">UPSC Image Resizer</Link></li>
+              <li><Link href="/tool/neet-ug-postcard-size-photo-generator" className="hover:text-emerald-600 transition">NEET Postcard Photo</Link></li>
               <li><Link href="/tool/rrb-ntpc-photo-and-signature-resizer" className="hover:text-emerald-600 transition">Railway RRB Resizer</Link></li>
               <li><Link href="/tool/eaadhaar-pdf-password-remover-online" className="hover:text-emerald-600 transition">e-Aadhaar Unlocker</Link></li>
               <li><Link href="/tool/photo-ka-size-20kb-kaise-kare-hindi" className="hover:text-emerald-600 transition">फोटो साइज 20KB करें</Link></li>
