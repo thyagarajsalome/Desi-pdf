@@ -40,6 +40,7 @@ export default function Footer() {
               <li><Link href="/jpg-to-webp" className="hover:text-amber-600 transition">JPG to WEBP</Link></li>
               <li><Link href="/passport-maker" className="hover:text-amber-600 transition">Passport Photo Maker</Link></li>
               <li><Link href="/icon-generator" className="hover:text-amber-600 font-semibold transition">CAD &amp; App Icon Studio</Link></li>
+              <li><Link href="/image-to-svg" className="hover:text-amber-600 font-semibold transition">Image to Vector (SVG)</Link></li>
               <li><Link href="/age-calculator" className="hover:text-amber-600 transition">Age Calculator</Link></li>
             </ul>
           </div>

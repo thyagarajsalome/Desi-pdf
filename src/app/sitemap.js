@@ -26,6 +26,7 @@ export default async function sitemap() {
     "/biodata-maker",
     "/railway-reservation-form",
     "/icon-generator",
+    "/image-to-svg",
     "/pricing",
     "/about",
     "/privacy",
@@ -42,6 +43,7 @@ export default async function sitemap() {
       changeFrequency = "daily";
     } else if (
       route === "/icon-generator" ||
+      route === "/image-to-svg" ||
       route === "/pdf-to-jpg" ||
       route === "/image-to-pdf" ||
       route === "/image-compressor" ||

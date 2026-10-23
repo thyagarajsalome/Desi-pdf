@@ -255,6 +255,16 @@ export default function Home() {
           featured: true,
           keywords: ["icon", "svg", "cad", "app icon", "favicon", "autocad", "vector", "symbol"]
         },
+        {
+          id: "image-to-svg",
+          title: "Image to Vector (SVG)",
+          desc: "Trace PNG, JPG & WEBP into scalable SVG vector paths",
+          icon: "fa-bezier-curve",
+          route: "/image-to-svg",
+          badge: "Vectorize",
+          featured: true,
+          keywords: ["svg", "vector", "png to svg", "vectorizer", "trace", "image to svg", "convert vector", "bitmap to svg"]
+        },
       ]
     }
   ];

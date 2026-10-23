@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useMemo } from "react";
+import Link from "next/link";
 import JSZip from "jszip";
 
 // Comprehensive CAD & App Icon Definitions (24x24 grid, 1.8px default stroke)
@@ -536,6 +537,7 @@ export default function IconGenerator() {
   const [copiedStatus, setCopiedStatus] = useState("");
   const [isDownloadingZip, setIsDownloadingZip] = useState(false);
   const [isDownloadingIco, setIsDownloadingIco] = useState(false);
+  const [isVectorizing, setIsVectorizing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
   // Custom Upload State
@@ -1094,6 +1096,40 @@ Drop these files into your mobile app or desktop CAD solution!
     }
   };
 
+  // Vectorize active raster image into SVG curves
+  const handleVectorizeActive = async () => {
+    if (!selectedIcon.isRaster || !selectedIcon.dataUrl) return;
+    setIsVectorizing(true);
+    try {
+      const { vectorizeImage } = await import("@/lib/vectorizer");
+      const result = await vectorizeImage(selectedIcon.dataUrl, {
+        mode: "monochrome",
+        threshold: 128,
+        pathOmit: 4,
+      });
+
+      const vectorized = {
+        ...selectedIcon,
+        isRaster: false,
+        rawSvg: () => result.svgString,
+        render: () => (
+          <div
+            dangerouslySetInnerHTML={{ __html: result.svgString }}
+            className="w-full h-full [&>svg]:w-full [&>svg]:h-full flex items-center justify-center"
+          />
+        ),
+        desc: "Vectorized SVG curves (traced from image)",
+      };
+      setSelectedIcon(vectorized);
+      setCustomSvgCode(result.svgString);
+    } catch (err) {
+      console.error("Vectorization failed:", err);
+      alert("Failed to vectorize image.");
+    } finally {
+      setIsVectorizing(false);
+    }
+  };
+
   return (
     <div className="w-full max-w-6xl mx-auto space-y-8">
       {/* Top Banner / Hero Info - Clean Standard Dark Card */}
@@ -1122,13 +1158,20 @@ Drop these files into your mobile app or desktop CAD solution!
               <i className="fa-solid fa-cloud-arrow-up text-sm"></i>
               <span>Upload Image / Logo</span>
             </button>
+            <Link
+              href="/image-to-svg"
+              className="w-full sm:w-auto px-4 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 font-bold text-xs sm:text-sm border border-gray-200 dark:border-gray-700 transition flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <i className="fa-solid fa-bezier-curve text-sm"></i>
+              <span>Vectorize (SVG)</span>
+            </Link>
             <button
               onClick={handleDownloadCadZip}
               disabled={isDownloadingZip}
               className="w-full sm:w-auto px-5 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 font-bold text-xs sm:text-sm border border-gray-200 dark:border-gray-700 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
               <i className="fa-solid fa-file-zipper text-sm"></i>
-              <span>{isDownloadingZip ? "Packaging..." : "Download CAD Pack (.zip)"}</span>
+              <span>{isDownloadingZip ? "Packaging..." : "CAD Pack (.zip)"}</span>
             </button>
             <input
               type="file"
@@ -1402,6 +1445,36 @@ Drop these files into your mobile app or desktop CAD solution!
                 {selectedIcon.isRaster ? "Image (Raster)" : "Vector (SVG)"}
               </span>
             </div>
+
+            {/* In-Studio Vectorizer Banner for Uploaded Raster Images */}
+            {selectedIcon.isRaster && (
+              <div className="p-3.5 rounded-2xl bg-gray-50 dark:bg-[#121217] border border-gray-200/80 dark:border-gray-800 space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <span className="text-xs font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
+                      <i className="fa-solid fa-wand-magic-sparkles text-amber-500"></i> Vectorize Bitmap to SVG
+                    </span>
+                    <span className="text-[11px] text-gray-400 block">
+                      Trace image pixels into crisp vector paths
+                    </span>
+                  </div>
+                  <button
+                    onClick={handleVectorizeActive}
+                    disabled={isVectorizing}
+                    className="px-3 py-1.5 rounded-xl bg-gray-900 hover:bg-black dark:bg-white dark:hover:bg-gray-100 text-white dark:text-gray-900 font-bold text-xs transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0 shadow-xs"
+                  >
+                    <i className={`fa-solid ${isVectorizing ? "fa-circle-notch fa-spin" : "fa-bezier-curve"} text-[10px]`}></i>
+                    <span>{isVectorizing ? "Tracing..." : "Vectorize"}</span>
+                  </button>
+                </div>
+                <div className="text-[10px] text-gray-400 flex items-center justify-between pt-1 border-t border-gray-200/50 dark:border-gray-800">
+                  <span>Need color layers or fine threshold?</span>
+                  <Link href="/image-to-svg" className="text-blue-500 hover:underline font-bold">
+                    Open Full Vectorizer &rarr;
+                  </Link>
+                </div>
+              </div>
+            )}
 
             {/* Main Interactive Stage */}
             <div className="flex flex-col items-center justify-center p-8 bg-gray-50 dark:bg-[#121217] rounded-2xl border border-gray-200/80 dark:border-gray-800 relative group">
