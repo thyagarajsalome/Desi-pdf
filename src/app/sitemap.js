@@ -33,12 +33,39 @@ export default async function sitemap() {
     "/disclaimer",
   ];
 
-  const staticMap = staticRoutes.map((route) => ({
-    url: `${baseUrl}${route}`,
-    lastModified: new Date(),
-    changeFrequency: route === "" ? "daily" : "weekly",
-    priority: route === "" ? 1.0 : 0.8,
-  }));
+  const staticMap = staticRoutes.map((route) => {
+    let priority = 0.8;
+    let changeFrequency = "weekly";
+
+    if (route === "") {
+      priority = 1.0;
+      changeFrequency = "daily";
+    } else if (
+      route === "/icon-generator" ||
+      route === "/pdf-to-jpg" ||
+      route === "/image-to-pdf" ||
+      route === "/image-compressor" ||
+      route === "/image-resizer"
+    ) {
+      priority = 0.9;
+      changeFrequency = "daily";
+    } else if (
+      route === "/about" ||
+      route === "/privacy" ||
+      route === "/terms" ||
+      route === "/disclaimer"
+    ) {
+      priority = 0.5;
+      changeFrequency = "monthly";
+    }
+
+    return {
+      url: `${baseUrl}${route}`,
+      lastModified: new Date(),
+      changeFrequency,
+      priority,
+    };
+  });
 
   const { data: seoPages } = await supabase.from('seo_pages').select('slug');
 
