@@ -25,6 +25,7 @@ export default async function sitemap() {
     "/id-card-merger",
     "/biodata-maker",
     "/railway-reservation-form",
+    "/icon-generator",
     "/pricing",
     "/about",
     "/privacy",

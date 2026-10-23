@@ -245,6 +245,16 @@ export default function Home() {
           featured: false,
           keywords: ["webp", "jpg to webp", "convert", "compress webp"]
         },
+        {
+          id: "icon-generator",
+          title: "CAD & App Icon Studio",
+          desc: "Design 24x24 technical SVG & mobile app icon packs",
+          icon: "fa-shapes",
+          route: "/icon-generator",
+          badge: "CAD / App",
+          featured: true,
+          keywords: ["icon", "svg", "cad", "app icon", "favicon", "autocad", "vector", "symbol"]
+        },
       ]
     }
   ];
