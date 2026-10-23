@@ -1096,19 +1096,18 @@ Drop these files into your mobile app or desktop CAD solution!
 
   return (
     <div className="w-full max-w-6xl mx-auto space-y-8">
-      {/* Top Banner / Hero Info */}
-      <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white rounded-3xl p-6 sm:p-10 shadow-xl border border-blue-700/30 relative overflow-hidden">
-        <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
-        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+      {/* Top Banner / Hero Info - Clean Standard Dark Card */}
+      <div className="bg-white dark:bg-[#09090b] text-gray-900 dark:text-white rounded-3xl p-6 sm:p-8 border border-gray-200 dark:border-gray-800 shadow-sm relative">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="space-y-2 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-300 text-xs font-bold tracking-wide uppercase">
-              <i className="fa-solid fa-shapes"></i> Technical CAD &amp; App Icon Studio
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700/60 text-gray-700 dark:text-gray-300 text-xs font-semibold tracking-wide">
+              <i className="fa-solid fa-shapes text-gray-500 dark:text-gray-400"></i> Technical CAD &amp; App Icon Studio
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">
               Design, Convert &amp; Export Precision Icons &amp; Favicons
             </h1>
-            <p className="text-blue-200/80 text-sm sm:text-base leading-relaxed">
-              Upload any image (<strong className="text-white font-bold">PNG, JPG, WEBP, SVG</strong>) to convert into multi-resolution app icons and favicons, or explore 35+ standardized 24×24 CAD architectural and UI vectors.
+            <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base leading-relaxed">
+              Upload any image (<strong className="text-gray-900 dark:text-gray-200 font-semibold">PNG, JPG, WEBP, SVG</strong>) to convert into multi-resolution app icons and favicons, or explore 35+ standardized 24×24 CAD architectural and UI vectors.
             </p>
           </div>
 
@@ -1118,17 +1117,17 @@ Drop these files into your mobile app or desktop CAD solution!
                 setActiveTab("custom");
                 fileInputRef.current?.click();
               }}
-              className="w-full sm:w-auto px-5 py-3.5 rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-extrabold text-xs sm:text-sm shadow-lg shadow-blue-500/25 transition flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full sm:w-auto px-5 py-3 rounded-xl bg-gray-900 hover:bg-black dark:bg-white dark:hover:bg-gray-100 text-white dark:text-gray-900 font-bold text-xs sm:text-sm border border-transparent transition flex items-center justify-center gap-2 cursor-pointer shadow-xs"
             >
-              <i className="fa-solid fa-cloud-arrow-up text-base"></i>
+              <i className="fa-solid fa-cloud-arrow-up text-sm"></i>
               <span>Upload Image / Logo</span>
             </button>
             <button
               onClick={handleDownloadCadZip}
               disabled={isDownloadingZip}
-              className="w-full sm:w-auto px-5 py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-xs sm:text-sm shadow-lg shadow-amber-500/20 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className="w-full sm:w-auto px-5 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 font-bold text-xs sm:text-sm border border-gray-200 dark:border-gray-700 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
-              <i className="fa-solid fa-file-zipper text-base"></i>
+              <i className="fa-solid fa-file-zipper text-sm"></i>
               <span>{isDownloadingZip ? "Packaging..." : "Download CAD Pack (.zip)"}</span>
             </button>
             <input
@@ -1684,18 +1683,18 @@ Drop these files into your mobile app or desktop CAD solution!
                 <button
                   onClick={handleDownloadIco}
                   disabled={isDownloadingIco}
-                  className="w-full py-3.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-xs transition flex items-center justify-center gap-2 shadow-sm cursor-pointer disabled:opacity-50"
+                  className="w-full py-3.5 px-4 rounded-xl bg-gray-900 hover:bg-black dark:bg-white dark:hover:bg-gray-100 text-white dark:text-gray-900 font-bold text-xs transition flex items-center justify-center gap-2 shadow-xs cursor-pointer disabled:opacity-50"
                 >
-                  <i className="fa-solid fa-star"></i>
+                  <i className="fa-solid fa-star text-sm"></i>
                   <span>{isDownloadingIco ? "Building..." : "Download Favicon (.ico)"}</span>
                 </button>
 
                 <button
                   onClick={handleDownloadAppPackZip}
                   disabled={isDownloadingZip}
-                  className="w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs transition flex items-center justify-center gap-2 shadow-sm cursor-pointer disabled:opacity-50"
+                  className="w-full py-3.5 px-4 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 font-bold text-xs border border-gray-200 dark:border-gray-700 transition flex items-center justify-center gap-2 shadow-xs cursor-pointer disabled:opacity-50"
                 >
-                  <i className="fa-solid fa-file-zipper"></i>
+                  <i className="fa-solid fa-file-zipper text-sm"></i>
                   <span>{isDownloadingZip ? "Packaging..." : "App Icon Pack (.zip)"}</span>
                 </button>
               </div>
@@ -1724,7 +1723,7 @@ Drop these files into your mobile app or desktop CAD solution!
         {/* 3 Step Walkthrough */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="p-6 rounded-2xl bg-gray-50 dark:bg-[#121217] border border-gray-100 dark:border-gray-800 space-y-2">
-            <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center text-lg font-bold">
+            <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700 flex items-center justify-center text-sm font-bold">
               1
             </div>
             <h3 className="font-bold text-gray-900 dark:text-white">Upload Any Image Format</h3>
@@ -1734,7 +1733,7 @@ Drop these files into your mobile app or desktop CAD solution!
           </div>
 
           <div className="p-6 rounded-2xl bg-gray-50 dark:bg-[#121217] border border-gray-100 dark:border-gray-800 space-y-2">
-            <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg font-bold">
+            <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700 flex items-center justify-center text-sm font-bold">
               2
             </div>
             <h3 className="font-bold text-gray-900 dark:text-white">Customize Frame &amp; Padding</h3>
@@ -1744,7 +1743,7 @@ Drop these files into your mobile app or desktop CAD solution!
           </div>
 
           <div className="p-6 rounded-2xl bg-gray-50 dark:bg-[#121217] border border-gray-100 dark:border-gray-800 space-y-2">
-            <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 flex items-center justify-center text-lg font-bold">
+            <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700 flex items-center justify-center text-sm font-bold">
               3
             </div>
             <h3 className="font-bold text-gray-900 dark:text-white">Export .ICO &amp; App Pack (.ZIP)</h3>

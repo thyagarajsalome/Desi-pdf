@@ -52,16 +52,11 @@ export default function IconGeneratorPage() {
   };
 
   return (
-    <div className="pt-16 pb-24 relative flex-grow flex flex-col items-center">
+    <div className="min-h-screen bg-gray-50 dark:bg-black pt-16 pb-24 px-4 relative flex-grow flex flex-col items-center">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-
-      {/* Subtle Blueprint Grid Background Mesh */}
-      <div className="absolute inset-0 -z-10 h-[60vh] w-full bg-transparent bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(#27272a_1px,transparent_1px)] [background-size:16px_16px]">
-        <div className="absolute top-0 right-1/4 -z-10 w-[600px] h-[600px] bg-blue-100/50 dark:bg-blue-900/20 rounded-full blur-3xl opacity-50 -translate-y-1/3"></div>
-      </div>
 
       <div className="max-w-6xl w-full mx-auto px-4 relative z-10">
         <IconGenerator />
