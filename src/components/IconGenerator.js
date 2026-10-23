@@ -463,8 +463,62 @@ export const ICON_LIBRARY = [
   }
 ];
 
+// Helper: Generate a standard multi-resolution Windows / Web ICO binary blob in pure JavaScript
+async function createIcoBlob(canvases) {
+  // canvases is an array of { width, height, canvas }
+  const pngBlobs = await Promise.all(
+    canvases.map(
+      (item) =>
+        new Promise((resolve) => {
+          item.canvas.toBlob(async (blob) => {
+            const buffer = await blob.arrayBuffer();
+            resolve({
+              width: item.width >= 256 ? 0 : item.width,
+              height: item.height >= 256 ? 0 : item.height,
+              data: new Uint8Array(buffer),
+            });
+          }, "image/png");
+        })
+    )
+  );
+
+  const count = pngBlobs.length;
+  const headerSize = 6 + 16 * count;
+  let totalSize = headerSize;
+  pngBlobs.forEach((b) => {
+    totalSize += b.data.length;
+  });
+
+  const out = new Uint8Array(totalSize);
+  const view = new DataView(out.buffer);
+
+  // 1. ICONDIR Header (6 bytes)
+  view.setUint16(0, 0, true); // Reserved (must be 0)
+  view.setUint16(2, 1, true); // 1 = ICO icon type
+  view.setUint16(4, count, true); // Number of images
+
+  // 2. ICONDIRENTRY (16 bytes each)
+  let offset = headerSize;
+  pngBlobs.forEach((b, i) => {
+    const entryOffset = 6 + i * 16;
+    view.setUint8(entryOffset + 0, b.width); // Width (0 for 256)
+    view.setUint8(entryOffset + 1, b.height); // Height (0 for 256)
+    view.setUint8(entryOffset + 2, 0); // Palette colors
+    view.setUint8(entryOffset + 3, 0); // Reserved
+    view.setUint16(entryOffset + 4, 1, true); // Color planes
+    view.setUint16(entryOffset + 6, 32, true); // Bits per pixel
+    view.setUint32(entryOffset + 8, b.data.length, true); // Size of image data
+    view.setUint32(entryOffset + 12, offset, true); // Offset of image data
+
+    out.set(b.data, offset);
+    offset += b.data.length;
+  });
+
+  return new Blob([out], { type: "image/x-icon" });
+}
+
 export default function IconGenerator() {
-  // State
+  // Mode & Tabs
   const [activeTab, setActiveTab] = useState("library"); // 'library' | 'custom'
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -475,15 +529,21 @@ export default function IconGenerator() {
   const [lineCap, setLineCap] = useState("round"); // 'round' | 'square'
   const [iconColor, setIconColor] = useState("#2563eb");
   const [containerShape, setContainerShape] = useState("transparent"); // 'transparent' | 'circle' | 'square' | 'squircle'
-  const [containerBg, setContainerBg] = useState("#eff6ff");
+  const [containerBg, setContainerBg] = useState("#ffffff");
+  const [iconPadding, setIconPadding] = useState(0); // 0 to 40%
+
+  // Status & Progress
   const [copiedStatus, setCopiedStatus] = useState("");
   const [isDownloadingZip, setIsDownloadingZip] = useState(false);
+  const [isDownloadingIco, setIsDownloadingIco] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Custom Upload State
+  const [customUploadedIcon, setCustomUploadedIcon] = useState(null);
   const [customSvgCode, setCustomSvgCode] = useState("");
   const fileInputRef = useRef(null);
 
-  // Filtered Icons
+  // Filtered Icons for CAD library
   const filteredIcons = useMemo(() => {
     return ICON_LIBRARY.filter((icon) => {
       const matchesCat =
@@ -509,14 +569,167 @@ export default function IconGenerator() {
     { label: "Neutral White", hex: "#ffffff" }
   ];
 
+  // Container Background Presets
+  const bgPresets = [
+    { label: "White", hex: "#ffffff" },
+    { label: "Dark Slate", hex: "#0f172a" },
+    { label: "Light Blue", hex: "#eff6ff" },
+    { label: "Blueprint Blue", hex: "#2563eb" },
+    { label: "Emerald Tint", hex: "#ecfdf5" },
+    { label: "Amber Warm", hex: "#fffbeb" },
+    { label: "Pitch Black", hex: "#000000" }
+  ];
+
+  // Universal Canvas Rasterizer (handles both SVG vector and raster PNG/JPG/WEBP)
+  const renderIconToCanvas = (size) => {
+    return new Promise((resolve, reject) => {
+      const canvas = document.createElement("canvas");
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext("2d");
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+
+      // 1. Draw container background if enabled
+      if (containerShape === "circle") {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
+        ctx.fillStyle = containerBg;
+        ctx.fill();
+        ctx.clip();
+      } else if (containerShape === "squircle" || containerShape === "square") {
+        const r = containerShape === "squircle" ? size * 0.225 : 0;
+        ctx.save();
+        ctx.beginPath();
+        if (ctx.roundRect) {
+          ctx.roundRect(0, 0, size, size, r);
+        } else {
+          ctx.rect(0, 0, size, size);
+        }
+        ctx.fillStyle = containerBg;
+        ctx.fill();
+        ctx.clip();
+      }
+
+      // Calculate inner area based on iconPadding (0 to 40%)
+      const paddingPx = (size * (iconPadding || 0)) / 100;
+      const innerX = paddingPx;
+      const innerY = paddingPx;
+      const innerW = Math.max(1, size - paddingPx * 2);
+      const innerH = Math.max(1, size - paddingPx * 2);
+
+      const restoreAndResolve = () => {
+        if (containerShape === "circle" || containerShape === "squircle" || containerShape === "square") {
+          ctx.restore();
+        }
+        resolve(canvas);
+      };
+
+      if (selectedIcon.isRaster && selectedIcon.dataUrl) {
+        // Draw uploaded raster image (PNG, JPG, WEBP)
+        const img = new Image();
+        img.onload = () => {
+          const scale = Math.min(innerW / img.naturalWidth, innerH / img.naturalHeight);
+          const dw = img.naturalWidth * scale;
+          const dh = img.naturalHeight * scale;
+          const dx = innerX + (innerW - dw) / 2;
+          const dy = innerY + (innerH - dh) / 2;
+          ctx.drawImage(img, dx, dy, dw, dh);
+          restoreAndResolve();
+        };
+        img.onerror = (err) => {
+          if (containerShape === "circle" || containerShape === "squircle" || containerShape === "square") {
+            ctx.restore();
+          }
+          reject(err);
+        };
+        img.src = selectedIcon.dataUrl;
+      } else {
+        // Draw SVG (built-in CAD or uploaded SVG)
+        const rawSvg = selectedIcon.rawSvg
+          ? selectedIcon.rawSvg(strokeWidth, lineCap, lineCap === "round" ? "round" : "miter", iconColor)
+          : customSvgCode;
+
+        const img = new Image();
+        const blob = new Blob([rawSvg], { type: "image/svg+xml;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        img.onload = () => {
+          ctx.drawImage(img, innerX, innerY, innerW, innerH);
+          URL.revokeObjectURL(url);
+          restoreAndResolve();
+        };
+        img.onerror = (err) => {
+          URL.revokeObjectURL(url);
+          if (containerShape === "circle" || containerShape === "squircle" || containerShape === "square") {
+            ctx.restore();
+          }
+          reject(err);
+        };
+        img.src = url;
+      }
+    });
+  };
+
+  // Download Single PNG
+  const handleDownloadPng = async (size) => {
+    try {
+      const canvas = await renderIconToCanvas(size);
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${selectedIcon.id || "icon"}-${size}x${size}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, "image/png");
+    } catch (err) {
+      console.error("PNG export error:", err);
+      alert("Failed to export PNG");
+    }
+  };
+
+  // Download Standard Windows & Web Favicon (.ico)
+  const handleDownloadIco = async () => {
+    setIsDownloadingIco(true);
+    try {
+      const sizes = [16, 32, 48];
+      const canvases = [];
+      for (const s of sizes) {
+        const c = await renderIconToCanvas(s);
+        canvases.push({ width: s, height: s, canvas: c });
+      }
+      const icoBlob = await createIcoBlob(canvases);
+      const url = URL.createObjectURL(icoBlob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${selectedIcon.id || "favicon"}.ico`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("ICO export error:", err);
+      alert("Failed to export .ico favicon");
+    } finally {
+      setIsDownloadingIco(false);
+    }
+  };
+
   // Copy SVG Code
   const handleCopySvg = () => {
-    const raw = selectedIcon.rawSvg(
-      strokeWidth,
-      lineCap,
-      lineCap === "round" ? "round" : "miter",
-      iconColor
-    );
+    if (selectedIcon.isRaster) return;
+    const raw = selectedIcon.rawSvg
+      ? selectedIcon.rawSvg(
+          strokeWidth,
+          lineCap,
+          lineCap === "round" ? "round" : "miter",
+          iconColor
+        )
+      : customSvgCode;
     navigator.clipboard.writeText(raw);
     setCopiedStatus("svg");
     setTimeout(() => setCopiedStatus(""), 2000);
@@ -524,16 +737,19 @@ export default function IconGenerator() {
 
   // Copy React (JSX) Code
   const handleCopyJsx = () => {
-    const componentName = selectedIcon.id
+    if (selectedIcon.isRaster) return;
+    const componentName = (selectedIcon.id || "AppIcon")
       .split("-")
       .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
       .join("") + "Icon";
-    const raw = selectedIcon.rawSvg(
-      strokeWidth,
-      lineCap,
-      lineCap === "round" ? "round" : "miter",
-      "currentColor"
-    );
+    const raw = selectedIcon.rawSvg
+      ? selectedIcon.rawSvg(
+          strokeWidth,
+          lineCap,
+          lineCap === "round" ? "round" : "miter",
+          "currentColor"
+        )
+      : customSvgCode;
     const jsx = `export function ${componentName}({ size = 24, color = "currentColor", className = "", ...props }) {
   return (
     ${raw.replace('width="24"', 'width={size}').replace('height="24"', 'height={size}').replace('stroke="currentColor"', 'stroke={color} className={className}')}
@@ -544,68 +760,7 @@ export default function IconGenerator() {
     setTimeout(() => setCopiedStatus(""), 2000);
   };
 
-  // Rasterize SVG onto an in-memory Canvas
-  const rasterizeToCanvas = (svgString, size) => {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      const blob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        canvas.width = size;
-        canvas.height = size;
-        const ctx = canvas.getContext("2d");
-        
-        // Draw background container if enabled
-        if (containerShape === "circle") {
-          ctx.beginPath();
-          ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
-          ctx.fillStyle = containerBg;
-          ctx.fill();
-        } else if (containerShape === "squircle" || containerShape === "square") {
-          const r = containerShape === "squircle" ? size * 0.22 : 0;
-          ctx.beginPath();
-          ctx.roundRect(0, 0, size, size, r);
-          ctx.fillStyle = containerBg;
-          ctx.fill();
-        }
-
-        ctx.drawImage(img, 0, 0, size, size);
-        URL.revokeObjectURL(url);
-        resolve(canvas);
-      };
-      img.onerror = reject;
-      img.src = url;
-    });
-  };
-
-  // Download Single PNG
-  const handleDownloadPng = async (size) => {
-    try {
-      const raw = selectedIcon.rawSvg(
-        strokeWidth,
-        lineCap,
-        lineCap === "round" ? "round" : "miter",
-        iconColor
-      );
-      const canvas = await rasterizeToCanvas(raw, size);
-      canvas.toBlob((blob) => {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `${selectedIcon.id}-${size}x${size}.png`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      });
-    } catch (err) {
-      console.error("PNG export error:", err);
-      alert("Failed to export PNG");
-    }
-  };
-
-  // Download Complete CAD Icon Package (.ZIP) as specified in iconsPlan.md
+  // Download Complete CAD Icon Package (.ZIP)
   const handleDownloadCadZip = async () => {
     setIsDownloadingZip(true);
     try {
@@ -633,14 +788,12 @@ export default function IconGenerator() {
         }
       });
 
-      // Include a ready-to-use Desktop CAD Icon Component template
       const componentTemplate = `// Reusable CAD Desktop Application Icon Component (AutoCAD / Desktop Standard)
 // Generated by DesiPDF Icon Studio (https://www.convertpdftojpg.in/icon-generator)
 
 import React from "react";
 
 export function CADIcon({ name, size = 24, color = "currentColor", className = "", ...props }) {
-  // Grid size: 24x24 default, supports 16px, 20px, 24px, 32px display
   return (
     <span 
       className={\`inline-flex items-center justify-center shrink-0 \${className}\`} 
@@ -660,7 +813,6 @@ export function CADIcon({ name, size = 24, color = "currentColor", className = "
 `;
       zip.file("CADIcon.jsx", componentTemplate);
 
-      // Include README instructions
       const readme = `# CAD Desktop Application Icon Pack
 Conforms to technical CAD standards:
 - 24x24 viewBox base grid
@@ -689,35 +841,146 @@ Unpack the 'icons/' folder into your desktop application's asset directory.
     }
   };
 
-  // Download Multi-Size Mobile App Icon Pack (.ZIP)
+  // Download Complete Multi-Platform App Icon Pack (.ZIP)
   const handleDownloadAppPackZip = async () => {
     setIsDownloadingZip(true);
     try {
       const zip = new JSZip();
-      const raw = selectedIcon.rawSvg(
-        strokeWidth,
-        lineCap,
-        lineCap === "round" ? "round" : "miter",
-        iconColor
-      );
 
-      // Sizes for Android (mdpi, hdpi, xhdpi, xxhdpi, xxxhdpi) and Windows ICO
-      const sizes = [16, 24, 32, 48, 64, 128, 256, 512];
-      for (const s of sizes) {
-        const canvas = await rasterizeToCanvas(raw, s);
-        const dataUrl = canvas.toDataURL("image/png");
-        const base64Data = dataUrl.replace(/^data:image\/png;base64,/, "");
-        zip.file(`icon-${s}x${s}.png`, base64Data, { base64: true });
+      // 1. Web Favicon Suite
+      const webFolder = zip.folder("web");
+      const webSizes = [16, 32, 180, 192, 512];
+      for (const s of webSizes) {
+        const c = await renderIconToCanvas(s);
+        const dataUrl = c.toDataURL("image/png");
+        const b64 = dataUrl.replace(/^data:image\/png;base64,/, "");
+        if (s === 16) webFolder.file("favicon-16x16.png", b64, { base64: true });
+        else if (s === 32) webFolder.file("favicon-32x32.png", b64, { base64: true });
+        else if (s === 180) webFolder.file("apple-touch-icon.png", b64, { base64: true });
+        else if (s === 192) webFolder.file("android-chrome-192x192.png", b64, { base64: true });
+        else if (s === 512) webFolder.file("android-chrome-512x512.png", b64, { base64: true });
       }
 
-      // Also save the pure SVG
-      zip.file(`${selectedIcon.id}.svg`, raw);
+      // Generate and put favicon.ico in root and web/
+      const icoSizes = [16, 32, 48];
+      const icoCanvases = [];
+      for (const s of icoSizes) {
+        const c = await renderIconToCanvas(s);
+        icoCanvases.push({ width: s, height: s, canvas: c });
+      }
+      const icoBlob = await createIcoBlob(icoCanvases);
+      const icoArrayBuffer = await icoBlob.arrayBuffer();
+      zip.file("favicon.ico", icoArrayBuffer);
+      webFolder.file("favicon.ico", icoArrayBuffer);
+
+      // site.webmanifest
+      const manifest = {
+        name: selectedIcon.name || "App Icon",
+        short_name: selectedIcon.name || "App",
+        icons: [
+          { src: "/android-chrome-192x192.png", sizes: "192x192", type: "image/png" },
+          { src: "/android-chrome-512x512.png", sizes: "512x512", type: "image/png" }
+        ],
+        theme_color: containerBg || "#ffffff",
+        background_color: containerBg || "#ffffff",
+        display: "standalone"
+      };
+      webFolder.file("site.webmanifest", JSON.stringify(manifest, null, 2));
+
+      // 2. Android App Icons (Mipmap folders)
+      const androidFolder = zip.folder("android");
+      const androidMipmaps = [
+        { folder: "mipmap-mdpi", size: 48 },
+        { folder: "mipmap-hdpi", size: 72 },
+        { folder: "mipmap-xhdpi", size: 96 },
+        { folder: "mipmap-xxhdpi", size: 144 },
+        { folder: "mipmap-xxxhdpi", size: 192 },
+      ];
+      for (const item of androidMipmaps) {
+        const c = await renderIconToCanvas(item.size);
+        const dataUrl = c.toDataURL("image/png");
+        const b64 = dataUrl.replace(/^data:image\/png;base64,/, "");
+        androidFolder.folder(item.folder).file("ic_launcher.png", b64, { base64: true });
+        androidFolder.folder(item.folder).file("ic_launcher_round.png", b64, { base64: true });
+      }
+      const playStoreCanvas = await renderIconToCanvas(512);
+      const playStoreB64 = playStoreCanvas.toDataURL("image/png").replace(/^data:image\/png;base64,/, "");
+      androidFolder.file("playstore-icon-512x512.png", playStoreB64, { base64: true });
+
+      // 3. iOS App Icons
+      const iosFolder = zip.folder("ios");
+      const iosSizes = [
+        { name: "AppIcon-20x20@2x.png", size: 40 },
+        { name: "AppIcon-20x20@3x.png", size: 60 },
+        { name: "AppIcon-29x29@2x.png", size: 58 },
+        { name: "AppIcon-29x29@3x.png", size: 87 },
+        { name: "AppIcon-40x40@2x.png", size: 80 },
+        { name: "AppIcon-40x40@3x.png", size: 120 },
+        { name: "AppIcon-60x60@2x.png", size: 120 },
+        { name: "AppIcon-60x60@3x.png", size: 180 },
+        { name: "AppStore-1024x1024.png", size: 1024 },
+      ];
+      for (const item of iosSizes) {
+        const c = await renderIconToCanvas(item.size);
+        const dataUrl = c.toDataURL("image/png");
+        const b64 = dataUrl.replace(/^data:image\/png;base64,/, "");
+        iosFolder.file(item.name, b64, { base64: true });
+      }
+
+      // 4. Windows Desktop / CAD App Icons
+      const winFolder = zip.folder("windows");
+      const winSizes = [16, 20, 24, 32, 48, 64, 128, 256];
+      for (const s of winSizes) {
+        const c = await renderIconToCanvas(s);
+        const dataUrl = c.toDataURL("image/png");
+        const b64 = dataUrl.replace(/^data:image\/png;base64,/, "");
+        winFolder.file(`app-icon-${s}x${s}.png`, b64, { base64: true });
+      }
+      winFolder.file("app-icon.ico", icoArrayBuffer);
+
+      // 5. If vector SVG is available, save pure SVG
+      if (!selectedIcon.isRaster && selectedIcon.rawSvg) {
+        const raw = selectedIcon.rawSvg(strokeWidth, lineCap, lineCap === "round" ? "round" : "miter", iconColor);
+        zip.file(`${selectedIcon.id || "icon"}.svg`, raw);
+      }
+
+      // 6. Documentation README
+      const readme = `# Multi-Platform App Icon Pack
+Generated by DesiPDF Icon Studio (https://www.convertpdftojpg.in/icon-generator)
+
+## Folder Contents:
+1. /web
+   - favicon.ico (16x16, 32x32, 48x48)
+   - favicon-16x16.png & favicon-32x32.png
+   - apple-touch-icon.png (180x180)
+   - android-chrome-192x192.png & 512x512.png
+   - site.webmanifest
+
+2. /android
+   - mipmap-mdpi (48x48)
+   - mipmap-hdpi (72x72)
+   - mipmap-xhdpi (96x96)
+   - mipmap-xxhdpi (144x144)
+   - mipmap-xxxhdpi (192x192)
+   - playstore-icon-512x512.png
+
+3. /ios
+   - iPhone & iPad AppIcon assets (40px, 58px, 60px, 80px, 87px, 120px, 180px)
+   - AppStore-1024x1024.png for App Store Connect
+
+4. /windows
+   - Desktop & CAD application toolbar icons (16, 20, 24, 32, 48, 64, 128, 256px)
+   - app-icon.ico
+
+Drop these files into your mobile app or desktop CAD solution!
+`;
+      zip.file("README.md", readme);
 
       const zipBlob = await zip.generateAsync({ type: "blob" });
       const url = URL.createObjectURL(zipBlob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${selectedIcon.id}-app-icon-pack.zip`;
+      a.download = `${selectedIcon.id || "app-icon"}-complete-icon-pack.zip`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -730,31 +993,104 @@ Unpack the 'icons/' folder into your desktop application's asset directory.
     }
   };
 
-  // Custom File Upload Handler
-  const handleCustomUpload = (e) => {
-    const file = e.target.files?.[0];
+  // Process any uploaded file (SVG, PNG, JPG, JPEG, WEBP)
+  const processImageFile = (file) => {
     if (!file) return;
 
-    if (file.type === "image/svg+xml" || file.name.endsWith(".svg")) {
+    const fileNameClean = file.name.replace(/\.[^/.]+$/, "");
+    const safeId = "uploaded-" + fileNameClean.toLowerCase().replace(/[^a-z0-9_-]/g, "-");
+
+    // 1. Vector SVG upload
+    if (file.type === "image/svg+xml" || file.name.toLowerCase().endsWith(".svg")) {
       const reader = new FileReader();
       reader.onload = (event) => {
         const content = event.target?.result;
         setCustomSvgCode(content);
-        setSelectedIcon({
-          id: "custom-uploaded-icon",
-          name: file.name.replace(/\.[^/.]+$/, ""),
+        const newIcon = {
+          id: safeId,
+          name: fileNameClean,
           category: "custom",
-          desc: "User uploaded SVG icon",
-          tags: ["custom", "uploaded"],
+          desc: "User uploaded SVG vector",
+          tags: ["custom", "uploaded", "svg"],
+          isRaster: false,
           render: () => (
-            <div dangerouslySetInnerHTML={{ __html: content }} className="w-full h-full [&>svg]:w-full [&>svg]:h-full" />
+            <div
+              dangerouslySetInnerHTML={{ __html: content }}
+              className="w-full h-full [&>svg]:w-full [&>svg]:h-full flex items-center justify-center"
+            />
           ),
           rawSvg: () => content
-        });
+        };
+        setCustomUploadedIcon(newIcon);
+        setSelectedIcon(newIcon);
+        setActiveTab("custom");
       };
       reader.readAsText(file);
-    } else {
-      alert("Please upload an SVG file for vector customization, or pick from our built-in CAD library.");
+    }
+    // 2. Raster Image Upload (PNG, JPG, JPEG, WEBP, GIF, BMP)
+    else {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const dataUrl = event.target?.result;
+        const newIcon = {
+          id: safeId,
+          name: fileNameClean,
+          category: "custom",
+          desc: `Uploaded image (${file.type.replace("image/", "").toUpperCase() || "Raster"})`,
+          tags: ["custom", "uploaded", "image"],
+          isRaster: true,
+          dataUrl: dataUrl,
+          render: () => (
+            <img
+              src={dataUrl}
+              alt={fileNameClean}
+              className="w-full h-full object-contain pointer-events-none"
+            />
+          ),
+          rawSvg: null
+        };
+        setCustomUploadedIcon(newIcon);
+        setSelectedIcon(newIcon);
+        // Default to a squircle with pleasant padding so logos look ready for app stores
+        if (containerShape === "transparent") {
+          setContainerShape("squircle");
+          setContainerBg("#ffffff");
+          setIconPadding(12);
+        }
+        setActiveTab("custom");
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // File Input Handler
+  const handleCustomUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      processImageFile(file);
+    }
+  };
+
+  // Drag and Drop Handlers
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      processImageFile(file);
     }
   };
 
@@ -768,15 +1104,25 @@ Unpack the 'icons/' folder into your desktop application's asset directory.
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-300 text-xs font-bold tracking-wide uppercase">
               <i className="fa-solid fa-shapes"></i> Technical CAD &amp; App Icon Studio
             </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-              Design, Customize &amp; Export Precision SVG Icons
-            </h2>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+              Design, Convert &amp; Export Precision Icons &amp; Favicons
+            </h1>
             <p className="text-blue-200/80 text-sm sm:text-base leading-relaxed">
-              Standardized on a 24×24 grid with crisp 1.8px CAD strokes. Perfectly scalable at 16, 20, 24, 32, and 48px for Windows CAD desktop software, mobile apps, and modern web apps.
+              Upload any image (<strong className="text-white font-bold">PNG, JPG, WEBP, SVG</strong>) to convert into multi-resolution app icons and favicons, or explore 35+ standardized 24×24 CAD architectural and UI vectors.
             </p>
           </div>
 
           <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto shrink-0">
+            <button
+              onClick={() => {
+                setActiveTab("custom");
+                fileInputRef.current?.click();
+              }}
+              className="w-full sm:w-auto px-5 py-3.5 rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-extrabold text-xs sm:text-sm shadow-lg shadow-blue-500/25 transition flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <i className="fa-solid fa-cloud-arrow-up text-base"></i>
+              <span>Upload Image / Logo</span>
+            </button>
             <button
               onClick={handleDownloadCadZip}
               disabled={isDownloadingZip}
@@ -785,18 +1131,11 @@ Unpack the 'icons/' folder into your desktop application's asset directory.
               <i className="fa-solid fa-file-zipper text-base"></i>
               <span>{isDownloadingZip ? "Packaging..." : "Download CAD Pack (.zip)"}</span>
             </button>
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="w-full sm:w-auto px-5 py-3.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs sm:text-sm border border-white/20 transition flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <i className="fa-solid fa-cloud-arrow-up"></i>
-              <span>Upload Custom SVG</span>
-            </button>
             <input
               type="file"
               ref={fileInputRef}
               onChange={handleCustomUpload}
-              accept=".svg,image/svg+xml"
+              accept="image/png, image/jpeg, image/webp, image/svg+xml, .svg, .png, .jpg, .jpeg, .webp"
               className="hidden"
             />
           </div>
@@ -806,83 +1145,239 @@ Unpack the 'icons/' folder into your desktop application's asset directory.
       {/* Main Studio Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
-        {/* Left Column: Icon Library Browser (7 cols) */}
+        {/* Left Column: Icon Library Browser or Image Converter Uploader (7 cols) */}
         <div className="lg:col-span-7 bg-white dark:bg-[#09090b] border border-gray-200 dark:border-gray-800 rounded-3xl p-6 shadow-sm space-y-6">
           
-          {/* Search & Category Filter */}
-          <div className="space-y-3">
-            <div className="relative">
-              <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-              <input
-                type="text"
-                placeholder="Search CAD tools (wall, line, door, rotate, measure)..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 rounded-2xl py-3 pl-11 pr-4 text-sm font-medium text-gray-900 dark:text-gray-100 outline-none focus:border-blue-500"
-              />
-            </div>
-
-            {/* Category Filter Pills */}
-            <div className="flex flex-wrap gap-2 text-xs font-bold">
-              {[
-                { id: "all", label: "All Icons" },
-                { id: "cad-arch", label: "Architecture 🏛️" },
-                { id: "cad-draw", label: "Drawing ✏️" },
-                { id: "cad-edit", label: "Editing / Transform ✂️" },
-                { id: "cad-nav", label: "Navigation 🧭" },
-                { id: "app-ui", label: "Mobile & App UI 📱" },
-              ].map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => setSelectedCategory(cat.id)}
-                  className={`px-3 py-1.5 rounded-xl transition ${
-                    selectedCategory === cat.id
-                      ? "bg-blue-600 text-white shadow-xs"
-                      : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
-                  }`}
-                >
-                  {cat.label}
-                </button>
-              ))}
-            </div>
+          {/* Top Mode Tabs: CAD Library vs Image to Icon Converter */}
+          <div className="grid grid-cols-2 gap-2 p-1.5 bg-gray-100 dark:bg-gray-800/60 rounded-2xl">
+            <button
+              onClick={() => setActiveTab("library")}
+              className={`py-2.5 px-3 rounded-xl font-extrabold text-xs sm:text-sm transition flex items-center justify-center gap-2 cursor-pointer ${
+                activeTab === "library"
+                  ? "bg-white dark:bg-black text-blue-600 dark:text-blue-400 shadow-xs"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+              }`}
+            >
+              <i className="fa-solid fa-compass-drafting"></i>
+              <span>CAD &amp; App Vector Library</span>
+            </button>
+            <button
+              onClick={() => setActiveTab("custom")}
+              className={`py-2.5 px-3 rounded-xl font-extrabold text-xs sm:text-sm transition flex items-center justify-center gap-2 cursor-pointer ${
+                activeTab === "custom"
+                  ? "bg-white dark:bg-black text-blue-600 dark:text-blue-400 shadow-xs"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+              }`}
+            >
+              <i className="fa-solid fa-image"></i>
+              <span>Convert Image / Logo</span>
+              <span className="hidden sm:inline-block text-[10px] bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded font-black uppercase">
+                Any Format
+              </span>
+            </button>
           </div>
 
-          {/* Icon Grid */}
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 max-h-[500px] overflow-y-auto pr-1">
-            {filteredIcons.map((icon) => {
-              const isSelected = selectedIcon.id === icon.id;
-              return (
-                <button
-                  key={icon.id}
-                  onClick={() => setSelectedIcon(icon)}
-                  className={`group relative p-3 rounded-2xl border text-center flex flex-col items-center justify-center gap-2 transition cursor-pointer ${
-                    isSelected
-                      ? "border-blue-600 bg-blue-50/50 dark:bg-blue-950/30 ring-2 ring-blue-500/30"
-                      : "border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 bg-gray-50/50 dark:bg-[#121217]"
-                  }`}
-                >
-                  <div className="w-10 h-10 flex items-center justify-center text-gray-800 dark:text-gray-100 group-hover:scale-110 transition-transform">
-                    <svg
-                      viewBox="0 0 24 24"
-                      className="w-7 h-7"
-                      fill="none"
-                      stroke="currentColor"
+          {/* TAB 1: CAD & App Vector Library */}
+          {activeTab === "library" && (
+            <div className="space-y-6">
+              {/* Search & Category Filter */}
+              <div className="space-y-3">
+                <div className="relative">
+                  <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                  <input
+                    type="text"
+                    placeholder="Search CAD tools (wall, line, door, rotate, measure)..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 rounded-2xl py-3 pl-11 pr-4 text-sm font-medium text-gray-900 dark:text-gray-100 outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                {/* Category Filter Pills */}
+                <div className="flex flex-wrap gap-2 text-xs font-bold">
+                  {[
+                    { id: "all", label: "All Icons" },
+                    { id: "cad-arch", label: "Architecture 🏛️" },
+                    { id: "cad-draw", label: "Drawing ✏️" },
+                    { id: "cad-edit", label: "Editing / Transform ✂️" },
+                    { id: "cad-nav", label: "Navigation 🧭" },
+                    { id: "app-ui", label: "Mobile & App UI 📱" },
+                  ].map((cat) => (
+                    <button
+                      key={cat.id}
+                      onClick={() => setSelectedCategory(cat.id)}
+                      className={`px-3 py-1.5 rounded-xl transition cursor-pointer ${
+                        selectedCategory === cat.id
+                          ? "bg-blue-600 text-white shadow-xs"
+                          : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+                      }`}
                     >
-                      {icon.render(1.8, "round", "round")}
-                    </svg>
-                  </div>
-                  <span className="text-[11px] font-bold text-gray-700 dark:text-gray-300 truncate w-full px-1" title={icon.name}>
-                    {icon.name}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+                      {cat.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-          <div className="pt-2 text-xs text-gray-400 flex items-center justify-between border-t border-gray-100 dark:border-gray-800">
-            <span>Showing {filteredIcons.length} technical vector symbols</span>
-            <span>24×24 ViewBox • Pure SVG</span>
-          </div>
+              {/* Icon Grid */}
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 max-h-[480px] overflow-y-auto pr-1">
+                {filteredIcons.map((icon) => {
+                  const isSelected = selectedIcon.id === icon.id;
+                  return (
+                    <button
+                      key={icon.id}
+                      onClick={() => setSelectedIcon(icon)}
+                      className={`group relative p-3 rounded-2xl border text-center flex flex-col items-center justify-center gap-2 transition cursor-pointer ${
+                        isSelected
+                          ? "border-blue-600 bg-blue-50/50 dark:bg-blue-950/30 ring-2 ring-blue-500/30"
+                          : "border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 bg-gray-50/50 dark:bg-[#121217]"
+                      }`}
+                    >
+                      <div className="w-10 h-10 flex items-center justify-center text-gray-800 dark:text-gray-100 group-hover:scale-110 transition-transform">
+                        <svg
+                          viewBox="0 0 24 24"
+                          className="w-7 h-7"
+                          fill="none"
+                          stroke="currentColor"
+                        >
+                          {icon.render(1.8, "round", "round")}
+                        </svg>
+                      </div>
+                      <span className="text-[11px] font-bold text-gray-700 dark:text-gray-300 truncate w-full px-1" title={icon.name}>
+                        {icon.name}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="pt-2 text-xs text-gray-400 flex items-center justify-between border-t border-gray-100 dark:border-gray-800">
+                <span>Showing {filteredIcons.length} technical vector symbols</span>
+                <span>24×24 ViewBox • Pure SVG</span>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 2: Image / Logo to Icon Converter */}
+          {activeTab === "custom" && (
+            <div className="space-y-6">
+              {/* Drag and Drop Upload Zone */}
+              <div
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                onClick={() => fileInputRef.current?.click()}
+                className={`p-8 border-2 border-dashed rounded-3xl text-center transition cursor-pointer flex flex-col items-center justify-center gap-3 ${
+                  isDragging
+                    ? "border-blue-500 bg-blue-50/80 dark:bg-blue-950/40"
+                    : "border-gray-300 dark:border-gray-700 hover:border-blue-500 bg-gray-50/50 dark:bg-[#121217]/50"
+                }`}
+              >
+                <div className="w-16 h-16 rounded-2xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center text-2xl shadow-inner">
+                  <i className="fa-solid fa-cloud-arrow-up"></i>
+                </div>
+                <div className="space-y-1">
+                  <h4 className="text-base font-bold text-gray-900 dark:text-white">
+                    Drag &amp; Drop your Image or Logo here
+                  </h4>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Supports <strong className="text-gray-700 dark:text-gray-300">PNG, JPG, JPEG, WEBP, and SVG</strong> (any resolution)
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center justify-center gap-1.5 pt-2">
+                  {["PNG", "JPG", "WEBP", "SVG"].map((fmt) => (
+                    <span
+                      key={fmt}
+                      className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-gray-200/80 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+                    >
+                      .{fmt.toLowerCase()}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Uploaded Image Active Status Card */}
+              {customUploadedIcon && (
+                <div className="p-4 rounded-2xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/60 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-12 h-12 rounded-xl bg-white dark:bg-black border border-blue-200 dark:border-blue-800 flex items-center justify-center overflow-hidden p-1 shrink-0">
+                      {customUploadedIcon.isRaster ? (
+                        <img
+                          src={customUploadedIcon.dataUrl}
+                          alt="Thumbnail"
+                          className="w-full h-full object-contain"
+                        />
+                      ) : (
+                        <div
+                          dangerouslySetInnerHTML={{ __html: customSvgCode }}
+                          className="w-full h-full [&>svg]:w-full [&>svg]:h-full"
+                        />
+                      )}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h5 className="font-extrabold text-sm text-gray-900 dark:text-white truncate max-w-[200px]">
+                          {customUploadedIcon.name}
+                        </h5>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-600 text-white">
+                          Active
+                        </span>
+                      </div>
+                      <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                        {customUploadedIcon.desc}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="px-3 py-1.5 rounded-xl bg-white dark:bg-black border border-gray-200 dark:border-gray-800 text-xs font-bold text-gray-700 dark:text-gray-300 hover:border-blue-500 transition cursor-pointer"
+                    >
+                      Change Image
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSelectedIcon(ICON_LIBRARY[0]);
+                        setActiveTab("library");
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-gray-200/80 dark:bg-gray-800 text-xs font-bold text-gray-600 dark:text-gray-300 hover:text-red-500 transition cursor-pointer"
+                    >
+                      Switch to CAD
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Conversion Feature Highlights */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                <div className="p-3.5 rounded-2xl bg-gray-50 dark:bg-[#121217] border border-gray-200/60 dark:border-gray-800/80 space-y-1">
+                  <div className="font-extrabold text-gray-900 dark:text-white flex items-center gap-1.5">
+                    <i className="fa-solid fa-shapes text-blue-500"></i> Shape Fitting
+                  </div>
+                  <p className="text-gray-500 leading-relaxed text-[11px]">
+                    Automatic framing for Squircles (iOS/Android), Circles (Favicons/Avatars), or Transparent icons.
+                  </p>
+                </div>
+                <div className="p-3.5 rounded-2xl bg-gray-50 dark:bg-[#121217] border border-gray-200/60 dark:border-gray-800/80 space-y-1">
+                  <div className="font-extrabold text-gray-900 dark:text-white flex items-center gap-1.5">
+                    <i className="fa-solid fa-sliders text-emerald-500"></i> Breathing Padding
+                  </div>
+                  <p className="text-gray-500 leading-relaxed text-[11px]">
+                    Adjust padding scale from 0% to 40% so logos sit comfortably within app launcher borders.
+                  </p>
+                </div>
+                <div className="p-3.5 rounded-2xl bg-gray-50 dark:bg-[#121217] border border-gray-200/60 dark:border-gray-800/80 space-y-1">
+                  <div className="font-extrabold text-gray-900 dark:text-white flex items-center gap-1.5">
+                    <i className="fa-solid fa-download text-amber-500"></i> 1-Click All Exports
+                  </div>
+                  <p className="text-gray-500 leading-relaxed text-[11px]">
+                    Download single PNGs, multi-resolution Favicon (.ico), or complete multi-platform App Packs (.zip).
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
         </div>
 
         {/* Right Column: Live Customizer & Multi-Size Inspector (5 cols) */}
@@ -900,61 +1395,90 @@ Unpack the 'icons/' folder into your desktop application's asset directory.
                   {selectedIcon.desc}
                 </p>
               </div>
-              <span className="text-[10px] uppercase tracking-wider font-extrabold px-2.5 py-1 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-900">
-                {selectedIcon.id}
+              <span className={`text-[10px] uppercase tracking-wider font-extrabold px-2.5 py-1 rounded-full border ${
+                selectedIcon.isRaster
+                  ? "bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900"
+                  : "bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-900"
+              }`}>
+                {selectedIcon.isRaster ? "Image (Raster)" : "Vector (SVG)"}
               </span>
             </div>
 
             {/* Main Interactive Stage */}
             <div className="flex flex-col items-center justify-center p-8 bg-gray-50 dark:bg-[#121217] rounded-2xl border border-gray-200/80 dark:border-gray-800 relative group">
               <div 
-                className="w-32 h-32 flex items-center justify-center transition-all duration-300"
+                className="w-36 h-36 flex items-center justify-center transition-all duration-300 overflow-hidden shadow-inner"
                 style={{
                   backgroundColor: containerShape !== "transparent" ? containerBg : "transparent",
-                  borderRadius: containerShape === "circle" ? "9999px" : containerShape === "squircle" ? "24px" : containerShape === "square" ? "8px" : "0",
-                  padding: containerShape !== "transparent" ? "20px" : "0"
+                  borderRadius: containerShape === "circle" ? "9999px" : containerShape === "squircle" ? "30px" : containerShape === "square" ? "10px" : "0",
+                  padding: `${iconPadding}%`
                 }}
               >
-                <svg
-                  viewBox="0 0 24 24"
-                  className="w-full h-full transition-all"
-                  fill="none"
-                  stroke={iconColor}
-                  style={{ color: iconColor }}
-                >
-                  {selectedIcon.render(strokeWidth, lineCap, lineCap === "round" ? "round" : "miter")}
-                </svg>
+                {selectedIcon.isRaster ? (
+                  <img
+                    src={selectedIcon.dataUrl}
+                    alt={selectedIcon.name}
+                    className="w-full h-full object-contain pointer-events-none"
+                  />
+                ) : (
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="w-full h-full transition-all"
+                    fill="none"
+                    stroke={iconColor}
+                    style={{ color: iconColor }}
+                  >
+                    {selectedIcon.render(strokeWidth, lineCap, lineCap === "round" ? "round" : "miter")}
+                  </svg>
+                )}
               </div>
               <span className="text-[10px] font-bold text-gray-400 mt-3 uppercase tracking-wider">
-                Active Preview (Stage)
+                Live Preview Stage
               </span>
             </div>
 
             {/* Multi-Size CAD Toolbar & App Inspection Grid */}
             <div className="space-y-2">
               <span className="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider block">
-                Multi-Size Legibility Test (Desktop &amp; Mobile)
+                Multi-Size Inspection (Favicon &amp; App Launcher)
               </span>
               <div className="grid grid-cols-5 gap-2 p-3 bg-gray-50 dark:bg-[#121217] rounded-2xl border border-gray-200/80 dark:border-gray-800 text-center">
                 {[
-                  { px: 16, label: "16px (Dense CAD)" },
+                  { px: 16, label: "16px (Dense CAD / Favicon)" },
                   { px: 20, label: "20px (Toolbar)" },
                   { px: 24, label: "24px (Standard)" },
                   { px: 32, label: "32px (Ribbon)" },
                   { px: 48, label: "48px (App Icon)" },
                 ].map((s) => (
                   <div key={s.px} className="flex flex-col items-center justify-center p-2 rounded-xl bg-white dark:bg-black/50 border border-gray-200/50 dark:border-gray-800/80">
-                    <div style={{ width: s.px, height: s.px }} className="flex items-center justify-center text-gray-900 dark:text-gray-100">
-                      <svg
-                        viewBox="0 0 24 24"
-                        width={s.px}
-                        height={s.px}
-                        fill="none"
-                        stroke={iconColor}
-                        style={{ color: iconColor }}
-                      >
-                        {selectedIcon.render(strokeWidth, lineCap, lineCap === "round" ? "round" : "miter")}
-                      </svg>
+                    <div 
+                      style={{ 
+                        width: s.px, 
+                        height: s.px,
+                        backgroundColor: containerShape !== "transparent" ? containerBg : "transparent",
+                        borderRadius: containerShape === "circle" ? "9999px" : containerShape === "squircle" ? `${s.px * 0.22}px` : "0",
+                        padding: containerShape !== "transparent" ? `${(s.px * iconPadding) / 100}px` : "0"
+                      }} 
+                      className="flex items-center justify-center overflow-hidden"
+                    >
+                      {selectedIcon.isRaster ? (
+                        <img
+                          src={selectedIcon.dataUrl}
+                          alt={selectedIcon.name}
+                          className="w-full h-full object-contain"
+                        />
+                      ) : (
+                        <svg
+                          viewBox="0 0 24 24"
+                          width={s.px}
+                          height={s.px}
+                          fill="none"
+                          stroke={iconColor}
+                          style={{ color: iconColor }}
+                        >
+                          {selectedIcon.render(strokeWidth, lineCap, lineCap === "round" ? "round" : "miter")}
+                        </svg>
+                      )}
                     </div>
                     <span className="text-[9px] font-bold text-gray-400 mt-2">{s.px}px</span>
                   </div>
@@ -962,134 +1486,192 @@ Unpack the 'icons/' folder into your desktop application's asset directory.
               </div>
             </div>
 
-            {/* Geometry & Stroke Controls */}
+            {/* Customizer Controls */}
             <div className="space-y-4 pt-2">
-              {/* Stroke Width Slider */}
+              
+              {/* Padding / Scale Slider (Especially essential for uploaded logos) */}
               <div>
                 <div className="flex justify-between text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">
-                  <span>Stroke Width: {strokeWidth}px</span>
-                  <span className="text-blue-500 font-semibold">{strokeWidth === 1.8 ? "1.8px (CAD Standard)" : ""}</span>
+                  <span>Icon Padding / Fit: {iconPadding}%</span>
+                  <span className="text-blue-500 font-semibold">{iconPadding === 0 ? "Full Bleed (0%)" : `${iconPadding}% Margin`}</span>
                 </div>
                 <input
                   type="range"
-                  min="0.8"
-                  max="3.0"
-                  step="0.1"
-                  value={strokeWidth}
-                  onChange={(e) => setStrokeWidth(parseFloat(e.target.value))}
+                  min="0"
+                  max="40"
+                  step="2"
+                  value={iconPadding}
+                  onChange={(e) => setIconPadding(parseInt(e.target.value, 10))}
                   className="w-full accent-blue-600 cursor-pointer"
                 />
                 <div className="flex justify-between text-[10px] text-gray-400 mt-1">
-                  <button onClick={() => setStrokeWidth(1.2)} className="hover:underline">1.2px (Thin)</button>
-                  <button onClick={() => setStrokeWidth(1.8)} className="font-bold text-blue-600 hover:underline">1.8px (AutoCAD)</button>
-                  <button onClick={() => setStrokeWidth(2.2)} className="hover:underline">2.2px (Bold)</button>
+                  <button onClick={() => setIconPadding(0)} className="hover:underline">0% (Fill)</button>
+                  <button onClick={() => setIconPadding(12)} className="font-bold text-blue-600 hover:underline">12% (Recommended)</button>
+                  <button onClick={() => setIconPadding(24)} className="hover:underline">24% (Spacious)</button>
                 </div>
               </div>
 
-              {/* Line Cap & Corners */}
+              {/* Container Shape & Background */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">
-                    Line Caps &amp; Joins
-                  </label>
-                  <div className="grid grid-cols-2 gap-1.5 p-1 bg-gray-100 dark:bg-gray-800 rounded-xl text-xs font-bold">
-                    <button
-                      onClick={() => setLineCap("round")}
-                      className={`py-1.5 rounded-lg transition ${
-                        lineCap === "round"
-                          ? "bg-white dark:bg-black text-blue-600 shadow-xs"
-                          : "text-gray-600 dark:text-gray-400"
-                      }`}
-                    >
-                      Round
-                    </button>
-                    <button
-                      onClick={() => setLineCap("square")}
-                      className={`py-1.5 rounded-lg transition ${
-                        lineCap === "square"
-                          ? "bg-white dark:bg-black text-blue-600 shadow-xs"
-                          : "text-gray-600 dark:text-gray-400"
-                      }`}
-                    >
-                      Technical
-                    </button>
-                  </div>
-                </div>
-
-                {/* Container Shape for App Icons */}
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">
-                    App Icon Backdrop
+                    Container Shape
                   </label>
                   <select
                     value={containerShape}
                     onChange={(e) => setContainerShape(e.target.value)}
                     className="w-full bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 rounded-xl py-2 px-3 text-xs font-bold text-gray-800 dark:text-gray-200 outline-none"
                   >
-                    <option value="transparent">None (Transparent)</option>
+                    <option value="transparent">Transparent (None)</option>
                     <option value="squircle">Squircle (iOS / Android)</option>
-                    <option value="circle">Circle (Round Icon)</option>
+                    <option value="circle">Circle (Round Icon / Favicon)</option>
                     <option value="square">Square (Desktop Tile)</option>
                   </select>
                 </div>
-              </div>
 
-              {/* Color Customizer */}
-              <div>
-                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-2">
-                  Stroke Color
-                </label>
-                <div className="flex flex-wrap items-center gap-2">
-                  {colorPresets.map((c) => (
-                    <button
-                      key={c.hex}
-                      onClick={() => setIconColor(c.hex)}
-                      className={`w-7 h-7 rounded-full border-2 transition-transform hover:scale-110 ${
-                        iconColor === c.hex ? "border-blue-500 scale-110 ring-2 ring-blue-500/20" : "border-transparent"
-                      }`}
-                      style={{ backgroundColor: c.hex }}
-                      title={c.label}
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">
+                    Background Color
+                  </label>
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="color"
+                      disabled={containerShape === "transparent"}
+                      value={containerBg.startsWith("#") ? containerBg : "#ffffff"}
+                      onChange={(e) => setContainerBg(e.target.value)}
+                      className="w-8 h-8 rounded-lg overflow-hidden cursor-pointer border-0 p-0 shrink-0 disabled:opacity-40"
                     />
-                  ))}
-                  <input
-                    type="color"
-                    value={iconColor.startsWith("#") ? iconColor : "#2563eb"}
-                    onChange={(e) => setIconColor(e.target.value)}
-                    className="w-7 h-7 rounded-full overflow-hidden cursor-pointer border-0 p-0"
-                    title="Custom color picker"
-                  />
+                    <select
+                      disabled={containerShape === "transparent"}
+                      value={containerBg}
+                      onChange={(e) => setContainerBg(e.target.value)}
+                      className="w-full bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 rounded-xl py-2 px-2 text-xs font-bold text-gray-800 dark:text-gray-200 outline-none disabled:opacity-40"
+                    >
+                      {bgPresets.map((bg) => (
+                        <option key={bg.hex} value={bg.hex}>{bg.label}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </div>
+
+              {/* Vector Only Controls (Stroke Width, Caps, Stroke Color) */}
+              {!selectedIcon.isRaster && (
+                <>
+                  {/* Stroke Width Slider */}
+                  <div>
+                    <div className="flex justify-between text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">
+                      <span>Stroke Width: {strokeWidth}px</span>
+                      <span className="text-blue-500 font-semibold">{strokeWidth === 1.8 ? "1.8px (CAD Standard)" : ""}</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0.8"
+                      max="3.0"
+                      step="0.1"
+                      value={strokeWidth}
+                      onChange={(e) => setStrokeWidth(parseFloat(e.target.value))}
+                      className="w-full accent-blue-600 cursor-pointer"
+                    />
+                    <div className="flex justify-between text-[10px] text-gray-400 mt-1">
+                      <button onClick={() => setStrokeWidth(1.2)} className="hover:underline">1.2px (Thin)</button>
+                      <button onClick={() => setStrokeWidth(1.8)} className="font-bold text-blue-600 hover:underline">1.8px (CAD)</button>
+                      <button onClick={() => setStrokeWidth(2.2)} className="hover:underline">2.2px (Bold)</button>
+                    </div>
+                  </div>
+
+                  {/* Line Cap & Corners */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5">
+                      Line Caps &amp; Joins
+                    </label>
+                    <div className="grid grid-cols-2 gap-1.5 p-1 bg-gray-100 dark:bg-gray-800 rounded-xl text-xs font-bold">
+                      <button
+                        onClick={() => setLineCap("round")}
+                        className={`py-1.5 rounded-lg transition cursor-pointer ${
+                          lineCap === "round"
+                            ? "bg-white dark:bg-black text-blue-600 shadow-xs"
+                            : "text-gray-600 dark:text-gray-400"
+                        }`}
+                      >
+                        Round
+                      </button>
+                      <button
+                        onClick={() => setLineCap("square")}
+                        className={`py-1.5 rounded-lg transition cursor-pointer ${
+                          lineCap === "square"
+                            ? "bg-white dark:bg-black text-blue-600 shadow-xs"
+                            : "text-gray-600 dark:text-gray-400"
+                        }`}
+                      >
+                        Technical
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Stroke Color Customizer */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-2">
+                      Stroke Color
+                    </label>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {colorPresets.map((c) => (
+                        <button
+                          key={c.hex}
+                          onClick={() => setIconColor(c.hex)}
+                          className={`w-7 h-7 rounded-full border-2 transition-transform hover:scale-110 cursor-pointer ${
+                            iconColor === c.hex ? "border-blue-500 scale-110 ring-2 ring-blue-500/20" : "border-transparent"
+                          }`}
+                          style={{ backgroundColor: c.hex }}
+                          title={c.label}
+                        />
+                      ))}
+                      <input
+                        type="color"
+                        value={iconColor.startsWith("#") ? iconColor : "#2563eb"}
+                        onChange={(e) => setIconColor(e.target.value)}
+                        className="w-7 h-7 rounded-full overflow-hidden cursor-pointer border-0 p-0"
+                        title="Custom stroke color"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+
             </div>
 
-            {/* Export & Code Copy Action Buttons */}
+            {/* Export & Action Buttons */}
             <div className="pt-4 border-t border-gray-100 dark:border-gray-800 space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={handleCopySvg}
-                  className="py-3 px-4 rounded-xl bg-gray-900 hover:bg-black dark:bg-white dark:hover:bg-gray-100 text-white dark:text-slate-900 font-bold text-xs transition flex items-center justify-center gap-2 cursor-pointer shadow-sm"
-                >
-                  <i className={`fa-solid ${copiedStatus === "svg" ? "fa-check text-emerald-400" : "fa-copy"}`}></i>
-                  <span>{copiedStatus === "svg" ? "SVG Copied!" : "Copy SVG Code"}</span>
-                </button>
-                <button
-                  onClick={handleCopyJsx}
-                  className="py-3 px-4 rounded-xl bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-800 font-bold text-xs transition flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <i className={`fa-solid ${copiedStatus === "jsx" ? "fa-check text-emerald-500" : "fa-code"}`}></i>
-                  <span>{copiedStatus === "jsx" ? "React JSX Copied!" : "Copy React (JSX)"}</span>
-                </button>
-              </div>
+              
+              {/* Vector Code Copy (If SVG) */}
+              {!selectedIcon.isRaster && (
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={handleCopySvg}
+                    className="py-3 px-4 rounded-xl bg-gray-900 hover:bg-black dark:bg-white dark:hover:bg-gray-100 text-white dark:text-slate-900 font-bold text-xs transition flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+                  >
+                    <i className={`fa-solid ${copiedStatus === "svg" ? "fa-check text-emerald-400" : "fa-copy"}`}></i>
+                    <span>{copiedStatus === "svg" ? "SVG Copied!" : "Copy SVG Code"}</span>
+                  </button>
+                  <button
+                    onClick={handleCopyJsx}
+                    className="py-3 px-4 rounded-xl bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-800 font-bold text-xs transition flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <i className={`fa-solid ${copiedStatus === "jsx" ? "fa-check text-emerald-500" : "fa-code"}`}></i>
+                    <span>{copiedStatus === "jsx" ? "React JSX Copied!" : "Copy React (JSX)"}</span>
+                  </button>
+                </div>
+              )}
 
               {/* PNG Download Sizes */}
-              <div className="flex items-center justify-between bg-gray-50 dark:bg-[#121217] p-2.5 rounded-xl border border-gray-200/80 dark:border-gray-800 text-xs font-bold">
-                <span className="text-gray-500 text-[11px] pl-1">Quick PNG Export:</span>
-                <div className="flex gap-1.5">
-                  {[24, 32, 64, 128, 512].map((sz) => (
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 bg-gray-50 dark:bg-[#121217] p-2.5 rounded-xl border border-gray-200/80 dark:border-gray-800 text-xs font-bold">
+                <span className="text-gray-500 text-[11px] pl-1">Export PNG:</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {[24, 32, 48, 64, 128, 256, 512, 1024].map((sz) => (
                     <button
                       key={sz}
                       onClick={() => handleDownloadPng(sz)}
-                      className="px-2 py-1 rounded-lg bg-white dark:bg-black border border-gray-200 dark:border-gray-700 hover:border-blue-500 text-[11px] text-gray-700 dark:text-gray-300 transition"
+                      className="px-2 py-1 rounded-lg bg-white dark:bg-black border border-gray-200 dark:border-gray-700 hover:border-blue-500 text-[11px] text-gray-700 dark:text-gray-300 transition cursor-pointer"
                     >
                       {sz}px
                     </button>
@@ -1097,15 +1679,30 @@ Unpack the 'icons/' folder into your desktop application's asset directory.
                 </div>
               </div>
 
-              {/* App Icon Pack ZIP */}
-              <button
-                onClick={handleDownloadAppPackZip}
-                disabled={isDownloadingZip}
-                className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition flex items-center justify-center gap-2 shadow-sm cursor-pointer disabled:opacity-50"
-              >
-                <i className="fa-solid fa-file-zipper"></i>
-                <span>Download Multi-Resolution App Pack (.zip)</span>
-              </button>
+              {/* Dual Primary Export Buttons: Favicon (.ico) & App Pack (.zip) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <button
+                  onClick={handleDownloadIco}
+                  disabled={isDownloadingIco}
+                  className="w-full py-3.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-xs transition flex items-center justify-center gap-2 shadow-sm cursor-pointer disabled:opacity-50"
+                >
+                  <i className="fa-solid fa-star"></i>
+                  <span>{isDownloadingIco ? "Building..." : "Download Favicon (.ico)"}</span>
+                </button>
+
+                <button
+                  onClick={handleDownloadAppPackZip}
+                  disabled={isDownloadingZip}
+                  className="w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs transition flex items-center justify-center gap-2 shadow-sm cursor-pointer disabled:opacity-50"
+                >
+                  <i className="fa-solid fa-file-zipper"></i>
+                  <span>{isDownloadingZip ? "Packaging..." : "App Icon Pack (.zip)"}</span>
+                </button>
+              </div>
+
+              <p className="text-[11px] text-center text-gray-400">
+                🔒 100% Client-Side. Your images are converted instantly in your browser and never sent to a server.
+              </p>
             </div>
 
           </div>
@@ -1113,55 +1710,64 @@ Unpack the 'icons/' folder into your desktop application's asset directory.
 
       </div>
 
-      {/* SEO & Technical Guidelines Section (Meat for Google Ranking & Users) */}
+      {/* SEO & Technical Guidelines Section (Organic Traffic Booster) */}
       <div className="bg-white dark:bg-[#09090b] border border-gray-200 dark:border-gray-800 rounded-3xl p-8 sm:p-12 space-y-8">
         <div>
-          <h3 className="text-2xl font-extrabold text-gray-900 dark:text-white mb-2">
-            Why Use Technical CAD &amp; Vector App Icons?
-          </h3>
+          <h2 className="text-2xl font-extrabold text-gray-900 dark:text-white mb-2">
+            Free Image to Icon Converter &amp; Technical CAD Icon Studio
+          </h2>
           <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base leading-relaxed">
-            In architectural drafting software (like AutoCAD, Revit, and LibreCAD) as well as modern mobile applications, icons must convey exact technical operations rather than generic artwork. A Line tool must be visibly distinct from a Wall; an architectural Door must show its 90-degree swing arc; and icons must remain razor-sharp at high-DPI scaling down to 16px.
+            Convert any picture or logo (PNG, JPG, WEBP, SVG) into multi-platform app icon packages and Windows/browser favicons (.ico). Designed for developers, architectural draftsmen, and mobile app creators who need pixel-perfect precision on 24×24 integer grids without blurry edges.
           </p>
         </div>
 
+        {/* 3 Step Walkthrough */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="p-6 rounded-2xl bg-gray-50 dark:bg-[#121217] border border-gray-100 dark:border-gray-800 space-y-2">
             <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center text-lg font-bold">
-              <i className="fa-solid fa-ruler-combined"></i>
+              1
             </div>
-            <h4 className="font-bold text-gray-900 dark:text-white">24×24 Pixel Grid</h4>
+            <h3 className="font-bold text-gray-900 dark:text-white">Upload Any Image Format</h3>
             <p className="text-xs text-gray-500 leading-relaxed">
-              Designed on an integer coordinate grid so strokes avoid sub-pixel blurring when rendered at 16px, 20px, 24px, or 32px display sizes.
+              Upload your company logo, custom vector, or illustration in PNG, JPG, WEBP, or SVG format. Everything loads privately inside your browser.
             </p>
           </div>
 
           <div className="p-6 rounded-2xl bg-gray-50 dark:bg-[#121217] border border-gray-100 dark:border-gray-800 space-y-2">
             <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg font-bold">
-              <i className="fa-solid fa-moon"></i>
+              2
             </div>
-            <h4 className="font-bold text-gray-900 dark:text-white">Auto Dark/Light Theme</h4>
+            <h3 className="font-bold text-gray-900 dark:text-white">Customize Frame &amp; Padding</h3>
             <p className="text-xs text-gray-500 leading-relaxed">
-              Exported with <code className="text-blue-500 font-mono">currentColor</code> so your UI buttons and toolbars automatically adapt to dark mode and light mode without duplicate files.
+              Choose Squircle for iOS &amp; Android, Circle for web favicons, or Transparent. Use the padding slider so your logo breathes and never clips.
             </p>
           </div>
 
           <div className="p-6 rounded-2xl bg-gray-50 dark:bg-[#121217] border border-gray-100 dark:border-gray-800 space-y-2">
             <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 flex items-center justify-center text-lg font-bold">
-              <i className="fa-solid fa-laptop-code"></i>
+              3
             </div>
-            <h4 className="font-bold text-gray-900 dark:text-white">Cross-Platform Ready</h4>
+            <h3 className="font-bold text-gray-900 dark:text-white">Export .ICO &amp; App Pack (.ZIP)</h3>
             <p className="text-xs text-gray-500 leading-relaxed">
-              Export pure SVG code, React JSX, high-res PNGs, and structured ZIP folders ready for Electron, Tauri, Qt, Flutter, React Native, and web apps.
+              Download standard multi-resolution .ico favicons (16, 32, 48px) or a complete ZIP package containing Android mipmaps, iOS App Icons, and web manifests.
             </p>
           </div>
         </div>
 
         {/* FAQs for Rich Snippets */}
         <div className="space-y-4 pt-6 border-t border-gray-100 dark:border-gray-800">
-          <h4 className="text-xl font-bold text-gray-900 dark:text-white">
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white">
             Frequently Asked Questions
-          </h4>
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div className="p-4 rounded-xl bg-gray-50 dark:bg-[#121217] border border-gray-100 dark:border-gray-800">
+              <span className="font-bold text-gray-800 dark:text-gray-200 block mb-1">
+                Can I convert PNG or JPG images into favicon .ico files?
+              </span>
+              <span className="text-gray-500 leading-relaxed">
+                Yes! Upload any PNG, JPG, or WEBP image, select your desired background and padding, and click "Download Favicon (.ico)". The tool creates a compliant multi-resolution Windows and Web .ico file containing 16x16, 32x32, and 48x48 icon streams.
+              </span>
+            </div>
             <div className="p-4 rounded-xl bg-gray-50 dark:bg-[#121217] border border-gray-100 dark:border-gray-800">
               <span className="font-bold text-gray-800 dark:text-gray-200 block mb-1">
                 How do I use these icons in a Desktop CAD application?
@@ -1172,10 +1778,18 @@ Unpack the 'icons/' folder into your desktop application's asset directory.
             </div>
             <div className="p-4 rounded-xl bg-gray-50 dark:bg-[#121217] border border-gray-100 dark:border-gray-800">
               <span className="font-bold text-gray-800 dark:text-gray-200 block mb-1">
-                Why is stroke width set to 1.8px by default?
+                What sizes are included in the Multi-Platform App Icon Pack?
               </span>
               <span className="text-gray-500 leading-relaxed">
-                A 1.8px stroke width provides optimal contrast and clarity when rendered on both 96 DPI standard desktop displays and modern 4K high-DPI screens without overwhelming small 16px buttons.
+                The App Icon Pack ZIP includes all official Android mipmap sizes (mdpi to xxxhdpi + 512px Play Store icon), iOS app icons (40px up to 1024px App Store graphic), Windows desktop resolutions (16px to 256px + .ico), and web favicons with a ready-to-use <code className="text-blue-500 font-mono">site.webmanifest</code>.
+              </span>
+            </div>
+            <div className="p-4 rounded-xl bg-gray-50 dark:bg-[#121217] border border-gray-100 dark:border-gray-800">
+              <span className="font-bold text-gray-800 dark:text-gray-200 block mb-1">
+                Are my uploaded images or logos kept private?
+              </span>
+              <span className="text-gray-500 leading-relaxed">
+                Yes, 100%. All rasterization, scaling, ICO generation, and ZIP compression occur directly inside your browser using HTML5 Canvas and Web APIs. No images are ever uploaded to any external server.
               </span>
             </div>
           </div>
