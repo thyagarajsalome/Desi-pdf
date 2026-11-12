@@ -22,6 +22,9 @@ export const metadata = {
   },
   verification: {
     google: "eIGuoLHf4b-3BLZA7nzDjmk39z12c7ICZQcmt4RVkYU",
+    other: {
+      "msvalidate.01": "7BE3F5092496F607BD8EB7753CD93E8C",
+    },
   },
   icons: {
     icon: [
@@ -52,6 +55,7 @@ export default function RootLayout({ children }) {
         <link rel="alternate icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" href="/icon.svg" />
         <meta name="google-site-verification" content="eIGuoLHf4b-3BLZA7nzDjmk39z12c7ICZQcmt4RVkYU" />
+        <meta name="msvalidate.01" content="7BE3F5092496F607BD8EB7753CD93E8C" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
         <script dangerouslySetInnerHTML={{
           __html: `
