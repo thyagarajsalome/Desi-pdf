@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Script from "next/script";
 import { useTheme } from "@/components/ThemeProvider";
 import { Check, Zap, Shield, Crown, Loader2 } from "lucide-react";
@@ -54,11 +54,11 @@ export default function PricingPage() {
             if (planName.includes("24 Hrs") || planName.includes("Student")) {
               now.setHours(now.getHours() + 24);
               pro_until = now.toISOString();
-            } else if (planName.includes("Pro")) {
+            } else if (planName.includes("Monthly")) {
               now.setMonth(now.getMonth() + 1);
               pro_until = now.toISOString();
-            } else if (planName.includes("Lifetime")) {
-              now.setFullYear(now.getFullYear() + 100);
+            } else if (planName.includes("Annual")) {
+              now.setFullYear(now.getFullYear() + 1);
               pro_until = now.toISOString();
             }
 
@@ -170,27 +170,29 @@ export default function PricingPage() {
           </button>
         </div>
 
-        {/* Lifetime */}
+        {/* Pro Annual */}
         <div className="bg-white dark:bg-[#09090b] border border-gray-200 dark:border-gray-800 rounded-3xl p-8 shadow-sm flex flex-col">
           <div className="h-12 w-12 bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-xl flex items-center justify-center mb-6">
             <Shield className="h-6 w-6" />
           </div>
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Desi-Deal (Lifetime)</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Pay once, use forever.</p>
-          <div className="text-4xl font-extrabold text-gray-900 dark:text-white mb-6">₹999</div>
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Pro Annual</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">~₹83/mo • Billed yearly (Save 44%)</p>
+          <div className="text-4xl font-extrabold text-gray-900 dark:text-white mb-6">
+            ₹999<span className="text-lg text-gray-400 font-medium">/yr</span>
+          </div>
           <ul className="space-y-4 mb-8 flex-grow">
-            {["Lifetime Pro Access", "All Future Tools Free", "100% Privacy Guarantee", "Early Access Features"].map((feature, i) => (
+            {["1 Year Full Pro Access", "Unlimited Conversions & ZIPs", "100% Privacy Guarantee", "Priority Support & New Tools"].map((feature, i) => (
               <li key={i} className="flex items-center gap-3 text-sm font-medium text-gray-700 dark:text-gray-300">
                 <Check className="h-5 w-5 text-purple-500" /> {feature}
               </li>
             ))}
           </ul>
           <button 
-            onClick={() => handlePayment("Lifetime Deal", 999)}
+            onClick={() => handlePayment("Pro Annual", 999)}
             disabled={loadingPlan !== null}
-            className="w-full py-4 rounded-xl font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/40 transition flex items-center justify-center gap-2"
+            className="w-full py-4 rounded-xl font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/40 transition flex items-center justify-center gap-2 cursor-pointer"
           >
-            {loadingPlan === "Lifetime Deal" ? <Loader2 className="h-5 w-5 animate-spin" /> : "Get Lifetime Deal"}
+            {loadingPlan === "Pro Annual" ? <Loader2 className="h-5 w-5 animate-spin" /> : "Subscribe ₹999/yr"}
           </button>
         </div>
 
