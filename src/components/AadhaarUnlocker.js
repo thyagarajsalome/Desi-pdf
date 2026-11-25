@@ -2,9 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { jsPDF } from "jspdf";
-import { auth } from "@/lib/firebase";
-import { onAuthStateChanged } from "firebase/auth";
-import { useProStatus } from "@/hooks/useProStatus";
+import { useAuth } from "@/context/AuthContext";
+import { loadPdfJs } from "@/lib/pdfjsLoader";
 import SecurityBadge from "@/components/SecurityBadge";
 
 export default function AadhaarUnlocker() {
@@ -14,29 +13,10 @@ export default function AadhaarUnlocker() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState(null);
   const [premiumAlert, setPremiumAlert] = useState({ show: false, message: "" });
-  const [user, setUser] = useState(null);
-  const { isPro } = useProStatus(user);
+  const { isPro } = useAuth();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-    });
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    // Load pdf.js dynamically via CDN
-    const script = document.createElement('script');
-    script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js";
-    script.async = true;
-    script.onload = () => {
-      window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
-    };
-    document.body.appendChild(script);
-
-    return () => {
-      document.body.removeChild(script);
-    };
+    loadPdfJs().catch((err) => console.error("PDF.js load error:", err));
   }, []);
 
   const handleFileChange = (e) => {
@@ -131,7 +111,6 @@ export default function AadhaarUnlocker() {
 
   return (
     <div className="w-full">
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
       
       <div className="bg-white dark:bg-[#09090b] border border-gray-200 dark:border-gray-800 rounded-3xl p-6 md:p-8 shadow-sm max-w-2xl mx-auto">
         <div className="text-center mb-8">

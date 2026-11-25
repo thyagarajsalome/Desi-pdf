@@ -187,7 +187,6 @@ export default function PassportMaker() {
 
   return (
     <div className="w-full">
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
       
       <div className="bg-white dark:bg-[#09090b] border border-gray-200 dark:border-gray-800 rounded-3xl p-6 md:p-8 shadow-sm max-w-4xl mx-auto">
         <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">

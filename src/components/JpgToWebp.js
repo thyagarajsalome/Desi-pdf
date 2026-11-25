@@ -225,7 +225,6 @@ export default function JpgToWebp() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
       {/* Upload Zone */}
       {files.length === 0 && (

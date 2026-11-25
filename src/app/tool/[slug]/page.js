@@ -1,27 +1,38 @@
 import { supabase } from "@/lib/supabaseClient";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import SscPhotoResizer from "@/components/SscPhotoResizer";
-import AadhaarUnlocker from "@/components/AadhaarUnlocker";
-import PanMerger from "@/components/PanMerger";
-import VoterIdPdf from "@/components/VoterIdPdf";
-import ThumbOptimizer from "@/components/ThumbOptimizer";
-import PassportMaker from "@/components/PassportMaker";
-import PdfCompressor from "@/components/PdfCompressor";
-import PdfConverter from "@/components/PdfConverter";
-import PdfMerger from "@/components/PdfMerger";
-import PdfSplitter from "@/components/PdfSplitter";
-import ImageToPdf from "@/components/ImageToPdf";
-import ImageCompressor from "@/components/ImageCompressor";
-import ImageResizer from "@/components/ImageResizer";
-import BackgroundRemover from "@/components/BackgroundRemover";
-import SignatureMaker from "@/components/SignatureMaker";
-import AgeCalculator from "@/components/AgeCalculator";
-import JpgToWebp from "@/components/JpgToWebp";
-import IdCardMerger from "@/components/IdCardMerger";
-import BiodataMaker from "@/components/BiodataMaker";
-import RailwayFormMaker from "@/components/RailwayFormMaker";
+import dynamic from "next/dynamic";
 import { TOOL_CATEGORY_META, STANDALONE_TOOLS } from "@/lib/toolCatalog";
+
+const ToolLoadingFallback = () => (
+  <div className="bg-white dark:bg-[#09090b] border border-gray-200 dark:border-gray-800 rounded-3xl p-12 text-center text-sm text-gray-500 dark:text-gray-400">
+    Loading interactive tool...
+  </div>
+);
+
+const DYNAMIC_TOOLS = {
+  "ssc-photo": dynamic(() => import("@/components/SscPhotoResizer"), { loading: ToolLoadingFallback }),
+  "ibps-sign": dynamic(() => import("@/components/SscPhotoResizer"), { loading: ToolLoadingFallback }),
+  "aadhaar-unlock": dynamic(() => import("@/components/AadhaarUnlocker"), { loading: ToolLoadingFallback }),
+  "pan-merge": dynamic(() => import("@/components/PanMerger"), { loading: ToolLoadingFallback }),
+  "id-card-merger": dynamic(() => import("@/components/IdCardMerger"), { loading: ToolLoadingFallback }),
+  "voter-id-pdf": dynamic(() => import("@/components/VoterIdPdf"), { loading: ToolLoadingFallback }),
+  "thumb-impression": dynamic(() => import("@/components/ThumbOptimizer"), { loading: ToolLoadingFallback }),
+  "passport-maker": dynamic(() => import("@/components/PassportMaker"), { loading: ToolLoadingFallback }),
+  "pdf-compress": dynamic(() => import("@/components/PdfCompressor"), { loading: ToolLoadingFallback }),
+  "pdf-to-jpg": dynamic(() => import("@/components/PdfConverter"), { loading: ToolLoadingFallback }),
+  "pdf-merge": dynamic(() => import("@/components/PdfMerger"), { loading: ToolLoadingFallback }),
+  "pdf-split": dynamic(() => import("@/components/PdfSplitter"), { loading: ToolLoadingFallback }),
+  "image-to-pdf": dynamic(() => import("@/components/ImageToPdf"), { loading: ToolLoadingFallback }),
+  "image-compressor": dynamic(() => import("@/components/ImageCompressor"), { loading: ToolLoadingFallback }),
+  "image-resizer": dynamic(() => import("@/components/ImageResizer"), { loading: ToolLoadingFallback }),
+  "background-remover": dynamic(() => import("@/components/BackgroundRemover"), { loading: ToolLoadingFallback }),
+  "signature-maker": dynamic(() => import("@/components/SignatureMaker"), { loading: ToolLoadingFallback }),
+  "age-calculator": dynamic(() => import("@/components/AgeCalculator"), { loading: ToolLoadingFallback }),
+  "jpg-to-webp": dynamic(() => import("@/components/JpgToWebp"), { loading: ToolLoadingFallback }),
+  "biodata-maker": dynamic(() => import("@/components/BiodataMaker"), { loading: ToolLoadingFallback }),
+  "railway-form": dynamic(() => import("@/components/RailwayFormMaker"), { loading: ToolLoadingFallback }),
+};
 
 // Next.js static generation (SSG) revalidation time (24 hours)
 export const revalidate = 86400;
@@ -97,30 +108,8 @@ export default async function PseoToolPage({ params }) {
     notFound();
   }
 
-  // Map the tool_target from the database to the actual React component
-  const ToolComponent = {
-    "ssc-photo": SscPhotoResizer,
-    "ibps-sign": SscPhotoResizer,
-    "aadhaar-unlock": AadhaarUnlocker,
-    "pan-merge": PanMerger,
-    "id-card-merger": IdCardMerger,
-    "voter-id-pdf": VoterIdPdf,
-    "thumb-impression": ThumbOptimizer,
-    "passport-maker": PassportMaker,
-    "pdf-compress": PdfCompressor,
-    "pdf-to-jpg": PdfConverter,
-    "pdf-merge": PdfMerger,
-    "pdf-split": PdfSplitter,
-    "image-to-pdf": ImageToPdf,
-    "image-compressor": ImageCompressor,
-    "image-resizer": ImageResizer,
-    "background-remover": BackgroundRemover,
-    "signature-maker": SignatureMaker,
-    "age-calculator": AgeCalculator,
-    "jpg-to-webp": JpgToWebp,
-    "biodata-maker": BiodataMaker,
-    "railway-form": RailwayFormMaker,
-  }[pageData.tool_target];
+  // Map the tool_target from the database to the code-split dynamic React component
+  const ToolComponent = DYNAMIC_TOOLS[pageData.tool_target];
 
   const categoryMeta =
     TOOL_CATEGORY_META[pageData.tool_target] ||

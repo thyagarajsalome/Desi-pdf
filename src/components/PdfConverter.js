@@ -2,36 +2,23 @@
 
 import { useState, useRef, useEffect } from "react";
 import JSZip from "jszip";
-import { auth } from "@/lib/firebase";
-import { onAuthStateChanged } from "firebase/auth";
-import { useProStatus } from "@/hooks/useProStatus";
+import { useAuth } from "@/context/AuthContext";
+import { loadPdfJs } from "@/lib/pdfjsLoader";
 
 export default function PdfConverter({ defaultFormat = "image/jpeg" }) {
   const [pdfjsLib, setPdfjsLib] = useState(null);
-  const [user, setUser] = useState(null);
-  const { isPro } = useProStatus(user);
+  const { user, isPro } = useAuth();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-    });
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
-    script.async = true;
-    script.onload = () => {
-      window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-      setPdfjsLib(window.pdfjsLib);
-    };
-    document.body.appendChild(script);
+    let active = true;
+    loadPdfJs()
+      .then((lib) => {
+        if (active) setPdfjsLib(lib);
+      })
+      .catch((err) => console.error("PDF.js load error:", err));
     return () => {
-      if(document.body.contains(script)) {
-         document.body.removeChild(script);
-      }
-    }
+      active = false;
+    };
   }, []);
 
   const [file, setFile] = useState(null);

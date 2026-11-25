@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-import { removeBackground } from '@imgly/background-removal';
 
 export default function BackgroundRemover() {
     const [selectedFile, setSelectedFile] = useState(null);
@@ -35,6 +34,7 @@ export default function BackgroundRemover() {
         setProgress(0);
 
         try {
+            const { removeBackground } = await import('@imgly/background-removal');
             const blob = await removeBackground(selectedFile, {
                 progress: (key, current, total) => {
                     if (total > 0) {
@@ -99,7 +99,6 @@ export default function BackgroundRemover() {
 
     return (
         <div className="w-full max-w-5xl mx-auto">
-            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
             <div className="bg-white dark:bg-[#09090b] border border-gray-200 dark:border-gray-800 rounded-3xl p-6 md:p-8 shadow-sm">
                 <div className="text-center mb-8">
                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Background Remover</h2>

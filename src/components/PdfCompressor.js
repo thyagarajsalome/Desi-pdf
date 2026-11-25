@@ -2,37 +2,23 @@
 
 import { useState, useRef, useEffect } from "react";
 import { jsPDF } from "jspdf";
-import { auth } from "@/lib/firebase";
-import { onAuthStateChanged } from "firebase/auth";
-import { useProStatus } from "@/hooks/useProStatus";
+import { useAuth } from "@/context/AuthContext";
+import { loadPdfJs } from "@/lib/pdfjsLoader";
 
 export default function PdfCompressor() {
   const [pdfjsLib, setPdfjsLib] = useState(null);
-  const [user, setUser] = useState(null);
-
-  const { isPro } = useProStatus(user);
+  const { user, isPro } = useAuth();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-    });
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    // If not already loaded by another component
-    if (window.pdfjsLib) {
-      setPdfjsLib(window.pdfjsLib);
-      return;
-    }
-    const script = document.createElement("script");
-    script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
-    script.async = true;
-    script.onload = () => {
-      window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-      setPdfjsLib(window.pdfjsLib);
+    let active = true;
+    loadPdfJs()
+      .then((lib) => {
+        if (active) setPdfjsLib(lib);
+      })
+      .catch((err) => console.error("PDF.js load error:", err));
+    return () => {
+      active = false;
     };
-    document.body.appendChild(script);
   }, []);
 
   const [file, setFile] = useState(null);

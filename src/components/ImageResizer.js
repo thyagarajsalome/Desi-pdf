@@ -250,7 +250,6 @@ export default function ImageResizer() {
 
   return (
     <div className="w-full max-w-5xl mx-auto space-y-6">
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
       
       <div className="bg-white dark:bg-[#09090b] border border-gray-200 dark:border-gray-800 rounded-3xl p-6 md:p-8 shadow-sm">
         
