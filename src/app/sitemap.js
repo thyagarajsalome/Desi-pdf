@@ -25,8 +25,8 @@ export default async function sitemap() {
     "/id-card-merger",
     "/biodata-maker",
     "/railway-reservation-form",
-    "/icon-generator",
     "/image-to-svg",
+    "/tools",
     "/pricing",
     "/about",
     "/privacy",
@@ -42,7 +42,7 @@ export default async function sitemap() {
       priority = 1.0;
       changeFrequency = "daily";
     } else if (
-      route === "/icon-generator" ||
+      route === "/tools" ||
       route === "/image-to-svg" ||
       route === "/pdf-to-jpg" ||
       route === "/image-to-pdf" ||

@@ -52,6 +52,7 @@ export default function Navbar() {
 
           <nav className="hidden lg:flex items-center gap-6">
             <Link href="/" className="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition">All Tools</Link>
+            <Link href="/tools" className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition">Exam &amp; Tool Directory</Link>
             <Link href="/image-to-pdf" className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition">Image to PDF</Link>
             <Link href="/jpg-to-webp" className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition">JPG to WEBP</Link>
             <Link href="/image-compressor" className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition">Compress Image</Link>
@@ -129,6 +130,7 @@ export default function Navbar() {
           <div className="space-y-1 mb-4">
             <p className="text-[10px] font-bold text-gray-400 dark:text-gray-600 uppercase tracking-widest px-3 mb-2">Tools</p>
             <Link onClick={() => setMobileMenuOpen(false)} href="/" className="block px-3 py-2 rounded-lg text-sm font-semibold text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-900">All Tools</Link>
+            <Link onClick={() => setMobileMenuOpen(false)} href="/tools" className="block px-3 py-2 rounded-lg text-sm font-semibold text-blue-600 dark:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-900">125+ Tools Directory</Link>
             <Link onClick={() => setMobileMenuOpen(false)} href="/image-to-pdf" className="block px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900">Image to PDF</Link>
             <Link onClick={() => setMobileMenuOpen(false)} href="/image-compressor" className="block px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900">Compress Image</Link>
             <Link onClick={() => setMobileMenuOpen(false)} href="/image-resizer" className="block px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900">Resize Image</Link>

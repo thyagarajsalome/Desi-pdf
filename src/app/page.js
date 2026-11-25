@@ -246,16 +246,6 @@ export default function Home() {
           keywords: ["webp", "jpg to webp", "convert", "compress webp"]
         },
         {
-          id: "icon-generator",
-          title: "CAD & App Icon Studio",
-          desc: "Design 24x24 technical SVG & mobile app icon packs",
-          icon: "fa-shapes",
-          route: "/icon-generator",
-          badge: "CAD / App",
-          featured: true,
-          keywords: ["icon", "svg", "cad", "app icon", "favicon", "autocad", "vector", "symbol"]
-        },
-        {
           id: "image-to-svg",
           title: "Image to Vector (SVG)",
           desc: "Trace PNG, JPG & WEBP into scalable SVG vector paths",
@@ -717,16 +707,25 @@ export default function Home() {
       {/* Popular Sarkari Exam & Quick Tools Directory (Internal Linking Hub for SEO) */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
         <div className="bg-gradient-to-br from-blue-50/70 to-indigo-50/50 dark:from-[#111116] dark:to-[#0c0c10] border border-blue-100 dark:border-gray-800 rounded-3xl p-6 sm:p-10 shadow-sm">
-          <div className="max-w-2xl mb-8">
-            <span className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400 bg-blue-100/60 dark:bg-blue-900/40 px-3 py-1 rounded-full">
-              Popular Form Tools &amp; Guides
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-3">
-              Direct Application Tools for Indian Aspirants
-            </h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-              Instant size converters, signature crops, and document unblockers matching official notification specifications.
-            </p>
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+            <div className="max-w-2xl">
+              <span className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400 bg-blue-100/60 dark:bg-blue-900/40 px-3 py-1 rounded-full">
+                Popular Form Tools &amp; Guides
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-3">
+                Direct Application Tools for Indian Aspirants
+              </h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                Instant size converters, signature crops, and document unblockers matching official notification specifications.
+              </p>
+            </div>
+            <Link
+              href="/tools"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold shadow-sm transition shrink-0 self-start sm:self-end"
+            >
+              <span>Browse All 125+ Tools Directory</span>
+              <i className="fa-solid fa-arrow-right text-xs"></i>
+            </Link>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">

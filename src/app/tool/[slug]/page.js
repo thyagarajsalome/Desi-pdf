@@ -21,12 +21,13 @@ import JpgToWebp from "@/components/JpgToWebp";
 import IdCardMerger from "@/components/IdCardMerger";
 import BiodataMaker from "@/components/BiodataMaker";
 import RailwayFormMaker from "@/components/RailwayFormMaker";
+import { TOOL_CATEGORY_META, STANDALONE_TOOLS } from "@/lib/toolCatalog";
 
-// Next.js static generation (SSG) revalidation time (e.g., 24 hours)
+// Next.js static generation (SSG) revalidation time (24 hours)
 export const revalidate = 86400;
 
 export async function generateStaticParams() {
-  const { data: pages } = await supabase.from('seo_pages').select('slug');
+  const { data: pages } = await supabase.from("seo_pages").select("slug");
   return pages?.map((page) => ({ slug: page.slug })) || [];
 }
 
@@ -34,23 +35,37 @@ export async function generateMetadata({ params }) {
   const { slug } = await params;
 
   const { data: page } = await supabase
-    .from('seo_pages')
-    .select('meta_title, meta_description')
-    .eq('slug', slug)
+    .from("seo_pages")
+    .select("meta_title, meta_description, h1_title")
+    .eq("slug", slug)
     .maybeSingle();
 
   if (!page) {
-    return { 
+    return {
       title: "Tool Not Found | DesiPDF",
-      robots: { index: false, follow: false }
+      robots: { index: false, follow: false },
     };
   }
+
+  const canonicalUrl = `https://www.convertpdftojpg.in/tool/${slug}`;
 
   return {
     title: page.meta_title,
     description: page.meta_description,
     alternates: {
-      canonical: `https://www.convertpdftojpg.in/tool/${slug}`,
+      canonical: canonicalUrl,
+    },
+    openGraph: {
+      title: page.meta_title,
+      description: page.meta_description,
+      url: canonicalUrl,
+      siteName: "DesiPDF",
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: page.meta_title,
+      description: page.meta_description,
     },
     robots: {
       index: true,
@@ -69,12 +84,15 @@ export async function generateMetadata({ params }) {
 export default async function PseoToolPage({ params }) {
   const { slug } = await params;
 
-  const { data: pageData } = await supabase
-    .from('seo_pages')
-    .select('*')
-    .eq('slug', slug)
-    .maybeSingle();
-  
+  const [{ data: pageData }, { data: allSeoPages }] = await Promise.all([
+    supabase.from("seo_pages").select("*").eq("slug", slug).maybeSingle(),
+    supabase
+      .from("seo_pages")
+      .select("slug, h1_title, hero_subtitle, tool_target")
+      .neq("slug", slug)
+      .order("id", { ascending: true }),
+  ]);
+
   if (!pageData) {
     notFound();
   }
@@ -104,58 +122,165 @@ export default async function PseoToolPage({ params }) {
     "railway-form": RailwayFormMaker,
   }[pageData.tool_target];
 
-  const parsedFaqs = (typeof pageData.faqs === 'string' ? JSON.parse(pageData.faqs) : pageData.faqs) || [];
-  const parsedHowTo = (typeof pageData.how_to === 'string' ? JSON.parse(pageData.how_to) : pageData.how_to) || [];
+  const categoryMeta =
+    TOOL_CATEGORY_META[pageData.tool_target] ||
+    TOOL_CATEGORY_META["image-resizer"];
+
+  const dbFaqs =
+    (typeof pageData.faqs === "string"
+      ? JSON.parse(pageData.faqs)
+      : pageData.faqs) || [];
+  const parsedHowTo =
+    (typeof pageData.how_to === "string"
+      ? JSON.parse(pageData.how_to)
+      : pageData.how_to) || [];
+
+  // Ensure every programmatic page has rich FAQ depth (at least 3 FAQs) without duplicating DB entries
+  const existingQuestions = new Set(dbFaqs.map((f) => f.q?.toLowerCase().trim()));
+  const mergedFaqs = [...dbFaqs];
+  if (mergedFaqs.length < 3 && categoryMeta.extraFaqs) {
+    for (const extra of categoryMeta.extraFaqs) {
+      if (mergedFaqs.length >= 3) break;
+      if (!existingQuestions.has(extra.q.toLowerCase().trim())) {
+        mergedFaqs.push(extra);
+      }
+    }
+  }
+
+  // Select 6 sibling pSEO tools dynamically (same tool_target first, then same categoryId)
+  const others = allSeoPages || [];
+  const sameTarget = others.filter((p) => p.tool_target === pageData.tool_target);
+  const sameCategory = others.filter((p) => {
+    if (p.tool_target === pageData.tool_target) return false;
+    return (
+      TOOL_CATEGORY_META[p.tool_target]?.categoryId === categoryMeta.categoryId
+    );
+  });
+  const fallbackPool = others.filter(
+    (p) =>
+      p.tool_target !== pageData.tool_target &&
+      TOOL_CATEGORY_META[p.tool_target]?.categoryId !== categoryMeta.categoryId
+  );
+
+  // Rotate starting offset deterministically by slug hash so every page distributes links evenly across all 106 slugs
+  const hash = slug.split("").reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+  const rotateSlice = (arr, count) => {
+    if (arr.length <= count) return arr;
+    const start = hash % arr.length;
+    const doubled = [...arr, ...arr];
+    return doubled.slice(start, start + count);
+  };
+
+  const siblingPages = [
+    ...rotateSlice(sameTarget, 4),
+    ...rotateSlice(sameCategory, 4),
+    ...rotateSlice(fallbackPool, 4),
+  ]
+    .filter(
+      (item, idx, self) =>
+        idx === self.findIndex((t) => t.slug === item.slug)
+    )
+    .slice(0, 6);
+
+  // Core standalone tools in same category
+  const relatedCoreTools = STANDALONE_TOOLS.filter(
+    (t) =>
+      t.categoryId === categoryMeta.categoryId &&
+      t.route !== categoryMeta.parentRoute
+  ).slice(0, 3);
+
+  const canonicalUrl = `https://www.convertpdftojpg.in/tool/${slug}`;
 
   // 1. SoftwareApplication Schema
   const softwareSchema = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    "name": pageData.h1_title || "DesiPDF Online Tool",
-    "operatingSystem": "All (Web Browser)",
-    "applicationCategory": "UtilitiesApplication",
-    "offers": {
+    name: pageData.h1_title || "DesiPDF Online Tool",
+    url: canonicalUrl,
+    operatingSystem: "All (Web Browser)",
+    applicationCategory: "UtilitiesApplication",
+    offers: {
       "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "INR"
+      price: "0",
+      priceCurrency: "INR",
     },
-    "description": pageData.meta_description || pageData.hero_subtitle
+    description: pageData.meta_description || pageData.hero_subtitle,
   };
 
-  // 2. FAQPage Schema
-  const faqSchema = parsedFaqs.length > 0 ? {
+  // 2. BreadcrumbList Schema
+  const breadcrumbSchema = {
     "@context": "https://schema.org",
-    "@type": "FAQPage",
-    "mainEntity": parsedFaqs.map(faq => ({
-      "@type": "Question",
-      "name": faq.q,
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": faq.a
-      }
-    }))
-  } : null;
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: "https://www.convertpdftojpg.in/",
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "All Tools Directory",
+        item: "https://www.convertpdftojpg.in/tools",
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: categoryMeta.categoryLabel,
+        item: `https://www.convertpdftojpg.in/tools#${categoryMeta.categoryId}`,
+      },
+      {
+        "@type": "ListItem",
+        position: 4,
+        name: pageData.h1_title,
+        item: canonicalUrl,
+      },
+    ],
+  };
 
-  // 3. HowTo Schema
-  const howToSchema = parsedHowTo.length > 0 ? {
-    "@context": "https://schema.org",
-    "@type": "HowTo",
-    "name": `How to use ${pageData.h1_title}`,
-    "step": parsedHowTo.map((step, idx) => ({
-      "@type": "HowToStep",
-      "position": idx + 1,
-      "text": step
-    }))
-  } : null;
+  // 3. FAQPage Schema
+  const faqSchema =
+    mergedFaqs.length > 0
+      ? {
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: mergedFaqs.map((faq) => ({
+            "@type": "Question",
+            name: faq.q,
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: faq.a,
+            },
+          })),
+        }
+      : null;
+
+  // 4. HowTo Schema
+  const howToSchema =
+    parsedHowTo.length > 0
+      ? {
+          "@context": "https://schema.org",
+          "@type": "HowTo",
+          name: `How to use ${pageData.h1_title}`,
+          step: parsedHowTo.map((step, idx) => ({
+            "@type": "HowToStep",
+            position: idx + 1,
+            text: step,
+          })),
+        }
+      : null;
 
   return (
-    <div className="pt-16 pb-24 relative flex-grow flex flex-col items-center">
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-      
+    <div className="pt-10 pb-24 relative flex-grow flex flex-col items-center">
       {/* Google Rich Structured Data Schemas */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
       {faqSchema && (
         <script
@@ -170,13 +295,32 @@ export default async function PseoToolPage({ params }) {
         />
       )}
 
-      {/* Background Mesh */}
-      <div className="absolute inset-0 -z-10 h-[60vh] w-full bg-transparent bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(#27272a_1px,transparent_1px)] [background-size:16px_16px]">
-        <div className="absolute top-0 right-1/4 -z-10 w-[600px] h-[600px] bg-blue-100/50 dark:bg-blue-900/20 rounded-full blur-3xl opacity-50 -translate-y-1/3"></div>
-      </div>
-
-      {/* SEO Hero Section */}
+      {/* Visible Breadcrumb + SEO Hero Section */}
       <div className="max-w-4xl mx-auto px-4 text-center mb-10">
+        <nav
+          aria-label="Breadcrumb"
+          className="flex flex-wrap items-center justify-center gap-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 mb-4"
+        >
+          <Link href="/" className="hover:text-blue-600 dark:hover:text-blue-400 transition">
+            Home
+          </Link>
+          <span>/</span>
+          <Link href="/tools" className="hover:text-blue-600 dark:hover:text-blue-400 transition">
+            All Tools
+          </Link>
+          <span>/</span>
+          <Link
+            href={`/tools#${categoryMeta.categoryId}`}
+            className="hover:text-blue-600 dark:hover:text-blue-400 transition"
+          >
+            {categoryMeta.categoryLabel}
+          </Link>
+          <span>/</span>
+          <span className="text-gray-900 dark:text-gray-200 font-semibold truncate max-w-[240px] sm:max-w-none">
+            {pageData.h1_title}
+          </span>
+        </nav>
+
         <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white tracking-tight mb-4 leading-tight">
           {pageData.h1_title}
         </h1>
@@ -186,131 +330,188 @@ export default async function PseoToolPage({ params }) {
       </div>
 
       {/* The Actual Interactive Tool */}
-      <div className="max-w-5xl w-full mx-auto px-4 relative z-10 mb-20">
-        {ToolComponent ? <ToolComponent /> : <div className="text-center p-10 text-red-500">Tool component not found.</div>}
+      <div className="max-w-5xl w-full mx-auto px-4 relative z-10 mb-16">
+        {ToolComponent ? (
+          <ToolComponent />
+        ) : (
+          <div className="text-center p-10 text-red-500">
+            Tool component not found.
+          </div>
+        )}
       </div>
 
-      {/* SEO Content & Article Section (The "Meat" for Google) */}
-      <div className="max-w-4xl w-full mx-auto px-4">
-        
-        {/* Context Paragraph */}
-        <div className="bg-white dark:bg-[#09090b] rounded-3xl p-8 md:p-12 shadow-sm border border-gray-100 dark:border-gray-800 mb-12">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Why use our {pageData.h1_title}?</h2>
-          <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-lg mb-8">
+      {/* Rich Technical SEO Content Section */}
+      <div className="max-w-4xl w-full mx-auto px-4 space-y-10">
+        {/* Official Format Specifications & Privacy Architecture Card */}
+        <div className="bg-white dark:bg-[#09090b] rounded-3xl p-6 md:p-10 shadow-sm border border-gray-200 dark:border-gray-800">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6 pb-4 border-b border-gray-100 dark:border-gray-800">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                Technical Specifications &amp; Portal Guidelines
+              </h2>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                Standard compliance checklist for {pageData.h1_title}
+              </p>
+            </div>
+            <Link
+              href={categoryMeta.parentRoute}
+              className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline shrink-0"
+            >
+              Main {categoryMeta.parentTitle} &rarr;
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {categoryMeta.specs.map((spec, idx) => (
+              <div
+                key={idx}
+                className="p-4 rounded-2xl bg-gray-50 dark:bg-[#121217] border border-gray-100 dark:border-gray-800"
+              >
+                <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400 block">
+                  {spec.label}
+                </span>
+                <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 mt-1 block">
+                  {spec.value}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-5 p-4 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/20 border border-emerald-200/70 dark:border-emerald-900/40 flex items-start gap-3 text-xs text-emerald-900 dark:text-emerald-200">
+            <i className="fa-solid fa-shield-halved text-emerald-600 dark:text-emerald-400 text-base mt-0.5"></i>
+            <p className="leading-relaxed">
+              <strong>100% Private Browser Processing:</strong> Unlike cloud websites that upload your personal photos, signatures, or Aadhaar/PAN cards to remote servers, DesiPDF processes everything directly inside your browser memory. Zero data leaves your device.
+            </p>
+          </div>
+        </div>
+
+        {/* Context Paragraph & How-To Steps */}
+        <div className="bg-white dark:bg-[#09090b] rounded-3xl p-8 md:p-12 shadow-sm border border-gray-200 dark:border-gray-800">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+            Why use our {pageData.h1_title}?
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-base sm:text-lg mb-8">
             {pageData.context_paragraph}
           </p>
 
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">How to use this tool:</h2>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+            Step-by-Step Instructions:
+          </h2>
           <div className="space-y-4">
             {parsedHowTo.map((step, idx) => (
               <div key={idx} className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-sm">
                   {idx + 1}
                 </div>
-                <p className="text-gray-700 dark:text-gray-300 pt-1">{step}</p>
+                <p className="text-gray-700 dark:text-gray-300 pt-1 text-sm sm:text-base">
+                  {step}
+                </p>
               </div>
             ))}
           </div>
         </div>
 
         {/* FAQs */}
-        <div className="text-center mb-10">
-          <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white">Frequently Asked Questions</h2>
+        <div>
+          <div className="text-center mb-8">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white">
+              Frequently Asked Questions
+            </h2>
+          </div>
+
+          <div className="space-y-4">
+            {mergedFaqs.map((faq, idx) => (
+              <div
+                key={idx}
+                className="bg-white dark:bg-[#09090b] border border-gray-200 dark:border-gray-800 rounded-2xl p-6 hover:shadow-sm transition"
+              >
+                <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white mb-2 flex items-start gap-3">
+                  <i className="fa-solid fa-circle-question text-blue-500 mt-1 text-sm"></i>{" "}
+                  <span>{faq.q}</span>
+                </h3>
+                <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 leading-relaxed pl-7">
+                  {faq.a}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
-        
-        <div className="space-y-6">
-          {parsedFaqs.map((faq, idx) => (
-            <div key={idx} className="bg-white dark:bg-[#09090b] border border-gray-200 dark:border-gray-800 rounded-2xl p-6 hover:shadow-md transition">
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3 flex items-start gap-3">
-                <i className="fa-solid fa-circle-question text-blue-500 mt-1"></i> {faq.q}
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 leading-relaxed pl-8">
-                {faq.a}
-              </p>
-            </div>
-          ))}
-        </div>
-        {/* Related Tools Inter-Linking Section */}
-        {(() => {
-          const relatedMap = {
-            "ssc-photo": [
-              { title: "Signature Maker", desc: "Draw or type exam signature", route: "/signature-maker", icon: "fa-signature" },
-              { title: "Image Compressor", desc: "Compress image to exact KB", route: "/image-compressor", icon: "fa-compress" },
-              { title: "Exam Photo Maker", desc: "Add Name & Date strip", route: "/passport-maker", icon: "fa-camera-retro" },
-            ],
-            "passport-maker": [
-              { title: "SSC Photo Resizer", desc: "Resize to 132x170 px", route: "/tool/ssc-photo-size-132x170-pixel", icon: "fa-crop" },
-              { title: "Background Remover", desc: "Change photo to white background", route: "/background-remover", icon: "fa-wand-magic-sparkles" },
-              { title: "Image Compressor", desc: "Compress to 20KB - 50KB", route: "/image-compressor", icon: "fa-compress" },
-            ],
-            "id-card-merger": [
-              { title: "Aadhaar PDF Unlocker", desc: "Remove PDF password", route: "/aadhaar-unlock", icon: "fa-unlock-keyhole" },
-              { title: "PDF Compressor", desc: "Reduce PDF size under 1MB", route: "/compress", icon: "fa-file-zipper" },
-              { title: "PDF to JPG", desc: "Convert PDF pages into images", route: "/pdf-to-jpg", icon: "fa-file-image" },
-            ],
-            "aadhaar-unlock": [
-              { title: "Aadhaar/PAN Merger", desc: "Merge front & back on A4 PDF", route: "/id-card-merger", icon: "fa-id-card" },
-              { title: "PDF Compressor", desc: "Shrink document size for portals", route: "/compress", icon: "fa-file-zipper" },
-              { title: "Merge PDFs", desc: "Combine multiple docs into one", route: "/merge", icon: "fa-layer-group" },
-            ],
-            "image-resizer": [
-              { title: "Image Compressor", desc: "Compress to 20KB or 50KB", route: "/image-compressor", icon: "fa-compress" },
-              { title: "Signature Maker", desc: "Create 140x60 bank signature", route: "/signature-maker", icon: "fa-signature" },
-              { title: "Background Remover", desc: "Make background white or transparent", route: "/background-remover", icon: "fa-wand-magic-sparkles" },
-            ],
-            "background-remover": [
-              { title: "Image Resizer", desc: "Set exact passport pixels", route: "/image-resizer", icon: "fa-crop-simple" },
-              { title: "Exam Photo Maker", desc: "Add Name & Date stamp", route: "/passport-maker", icon: "fa-camera-retro" },
-              { title: "JPG to WEBP", desc: "Convert to modern web format", route: "/jpg-to-webp", icon: "fa-file-image" },
-            ],
-            "signature-maker": [
-              { title: "Image Resizer", desc: "Resize signature to 140x60 px", route: "/image-resizer", icon: "fa-crop-simple" },
-              { title: "Thumb Impression", desc: "Enhance ink impression scan", route: "/thumb-impression", icon: "fa-fingerprint" },
-              { title: "Image to PDF", desc: "Combine signs & IDs to PDF", route: "/image-to-pdf", icon: "fa-images" },
-            ],
-          };
 
-          const defaultRelated = [
-            { title: "Image Compressor", desc: "Reduce image file size", route: "/image-compressor", icon: "fa-compress" },
-            { title: "PDF Merger", desc: "Combine documents into one PDF", route: "/merge", icon: "fa-layer-group" },
-            { title: "Aadhaar/PAN Merger", desc: "Front & back onto single A4", route: "/id-card-merger", icon: "fa-id-card" },
-          ];
-
-          const items = relatedMap[pageData.tool_target] || defaultRelated;
-
-          return (
-            <div className="mt-16 pt-12 border-t border-gray-200 dark:border-gray-800">
-              <div className="text-center mb-8">
-                <span className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-3 py-1 rounded-full">
-                  Recommended For You
+        {/* Dynamic Related Sibling Programmatic Pages (Eliminates Orphan Pages) */}
+        {siblingPages.length > 0 && (
+          <div className="pt-8 border-t border-gray-200 dark:border-gray-800 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <span className="text-[11px] font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400">
+                  Related Guides &amp; Exam Presets
                 </span>
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mt-3">
-                  Other Helpful Tools for Indian Forms
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                  Similar {categoryMeta.categoryLabel} Tools
                 </h3>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {items.map((item, i) => (
-                  <Link
-                    key={i}
-                    href={item.route}
-                    className="p-5 rounded-2xl bg-white dark:bg-[#09090b] border border-gray-200 dark:border-gray-800 hover:border-blue-500 dark:hover:border-blue-500 shadow-sm hover:shadow-md transition-all group flex flex-col items-start"
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                      <i className={`fa-solid ${item.icon}`}></i>
-                    </div>
-                    <h4 className="font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                      {item.title}
-                    </h4>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      {item.desc}
-                    </p>
-                  </Link>
-                ))}
-              </div>
+              <Link
+                href="/tools"
+                className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline shrink-0"
+              >
+                View All 125+ Tools &rarr;
+              </Link>
             </div>
-          );
-        })()}
 
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+              {siblingPages.map((sib) => (
+                <Link
+                  key={sib.slug}
+                  href={`/tool/${sib.slug}`}
+                  className="p-4 rounded-2xl bg-white dark:bg-[#09090b] border border-gray-200 dark:border-gray-800 hover:border-blue-500 dark:hover:border-blue-500 transition-all group flex flex-col justify-between"
+                >
+                  <div>
+                    <h4 className="font-bold text-sm text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2">
+                      {sib.h1_title}
+                    </h4>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
+                      {sib.hero_subtitle}
+                    </p>
+                  </div>
+                  <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 mt-3 inline-flex items-center gap-1">
+                    Open Tool &rarr;
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Core Standalone Tools Inter-Linking Section */}
+        <div className="pt-8 border-t border-gray-200 dark:border-gray-800">
+          <div className="text-center mb-6">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+              Other Essential DesiPDF Utilities
+            </h3>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {[
+              {
+                title: categoryMeta.parentTitle,
+                desc: "Open the main full-screen utility",
+                route: categoryMeta.parentRoute,
+              },
+              ...relatedCoreTools.slice(0, 2),
+            ].map((item, i) => (
+              <Link
+                key={i}
+                href={item.route}
+                className="p-5 rounded-2xl bg-white dark:bg-[#09090b] border border-gray-200 dark:border-gray-800 hover:border-blue-500 dark:hover:border-blue-500 shadow-xs transition-all group flex flex-col items-start"
+              >
+                <h4 className="font-bold text-sm text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                  {item.title}
+                </h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  {item.desc}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

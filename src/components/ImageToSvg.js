@@ -205,11 +205,11 @@ export default function ImageToSvg() {
               <span>{imageSrc ? "Upload New Image" : "Select Image to Vectorize"}</span>
             </button>
             <Link
-              href="/icon-generator"
+              href="/tools"
               className="w-full sm:w-auto px-5 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 font-bold text-xs sm:text-sm border border-gray-200 dark:border-gray-700 transition flex items-center justify-center gap-2 cursor-pointer"
             >
-              <i className="fa-solid fa-shapes text-sm"></i>
-              <span>Open CAD Icon Studio</span>
+              <i className="fa-solid fa-table-cells text-sm"></i>
+              <span>Browse All Tools</span>
             </Link>
             <input
               type="file"
@@ -566,13 +566,13 @@ export default function ImageToSvg() {
                 </button>
               </div>
 
-              {/* Cross-Link to Icon Studio */}
+              {/* Cross-Link to Image Resizer */}
               <Link
-                href="/icon-generator"
+                href="/image-resizer"
                 className="w-full py-2.5 px-3 rounded-xl bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-300 font-bold text-xs border border-blue-200 dark:border-blue-900/60 transition flex items-center justify-center gap-2"
               >
-                <i className="fa-solid fa-shapes"></i>
-                <span>Use this in App Icon &amp; Favicon Maker</span>
+                <i className="fa-solid fa-crop-simple"></i>
+                <span>Need Exact Pixels? Open Image Resizer</span>
               </Link>
             </div>
 
