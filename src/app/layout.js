@@ -1,4 +1,5 @@
 import { Plus_Jakarta_Sans } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -75,6 +76,18 @@ export default function RootLayout({ children }) {
             <Footer />
           </AuthProvider>
         </ThemeProvider>
+        <Script
+          src="https://www.googletagmanager.com/gtm.js?id=GTM-PJK4JTL7"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-025JBB095N');
+          `}
+        </Script>
       </body>
     </html>
   );
